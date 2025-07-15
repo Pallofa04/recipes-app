@@ -4,7 +4,7 @@
 
 1. **Navigate to the FastAPI backend directory:**
    ```bash
-   cd fastapi-backend
+   cd backend
    ```
 
 2. **Create a virtual environment (recommended):**
