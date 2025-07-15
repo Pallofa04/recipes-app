@@ -1,25 +1,41 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# ──────────── Frontend (React/Vue/etc) ────────────
+node_modules/       # Dependencias de npm/yarn
+dist/               # Carpeta de build
+dist-ssr/           # Build para SSR (Vue/Nuxt)
+.temp/              # Archivos temporales (Vite)
+.cache/             # Cache de herramientas
+.env                # Variables de entorno (¡NUNCA subir!)
+.env.local          # Variables locales
+.env.*.local        # Otros entornos locales
+*.log               # Logs de npm/yarn/pnpm
 
+# ──────────── Backend (Python) ────────────
+__pycache__/        # Cache de Python
+*.py[cod]           # Archivos compilados de Python
+venv/               # Entorno virtual (¡IMPORTANTE!)
+.venv/              # Alternativa común para venv
+env/                # Otra variante
+.python-version     # Archivo de pyenv
+
+# ──────────── Datos y Secrets ────────────
+*.env               # Cualquier archivo .env
+*.key               # Archivos de claves
+credentials.json    # Credenciales de APIs
+firebase-config.json# Configs sensibles
+data.db             # Base de datos local
+*.sqlite            # SQLite
+instance/           # Instancias de Flask
+
+# ──────────── Editors/IDEs ────────────
+.vscode/            # Config de VSCode (excepto extensions.json)
+!.vscode/extensions.json  # <- Este sí se incluye
+.idea/              # JetBrains IDE
+.DS_Store           # macOS
+*.suo               # Windows
+*.swp               # Vim
+
+# ──────────── Sistemas Operativos ────────────
+Thumbs.db           # Windows
+ehthumbs.db         # Windows
+Desktop.ini         # Windows
 node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.env
