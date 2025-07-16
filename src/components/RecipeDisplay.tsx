@@ -1,7 +1,12 @@
 import React from 'react';
 import { Clock, Users, Target, ChefHat } from 'lucide-react';
+import { RecipeResponse } from '../types';
 
-const RecipeDisplay = ({ recipe }) => {
+interface RecipeDisplayProps {
+  recipe: RecipeResponse | null;
+}
+
+const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
   if (!recipe) return null;
 
   return (
