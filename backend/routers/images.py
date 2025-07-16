@@ -12,11 +12,11 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Configuración de Gemini
+# Gemini Configuration
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Modelos Pydantic para validación
+# Pydantic Models for validation
 class IngredientInfo(BaseModel):
     name: str
     state: Optional[str] = None
@@ -34,61 +34,61 @@ class DishIdentificationResponse(BaseModel):
     success: bool
 
 def extract_json(text: str) -> Dict[str, Any]:
-    """Extrae y valida el JSON de la respuesta de Gemini"""
+    """Extracts and validates JSON from Gemini's response"""
     try:
-        # Buscar el primer bloque JSON válido
+        # Find the first valid JSON block
         json_match = re.search(r'\{[\s\S]*\}', text)
         if json_match:
             return json.loads(json_match.group(0))
-        raise ValueError("No se encontró JSON válido en la respuesta")
+        raise ValueError("No valid JSON found in the response")
     except json.JSONDecodeError as e:
-        raise ValueError(f"Error decodificando JSON: {str(e)}")
+        raise ValueError(f"JSON decoding error: {str(e)}")
 
 async def validate_image_file(file: UploadFile):
-    """Valida el archivo de imagen"""
+    """Validates the image file"""
     if not file.content_type.startswith('image/'):
-        raise HTTPException(400, "Solo se permiten archivos de imagen (JPEG, PNG, WEBP)")
+        raise HTTPException(400, "Only image files are allowed (JPEG, PNG, WEBP)")
     
     try:
         image_data = await file.read()
         if len(image_data) > 10 * 1024 * 1024:  # 10MB
-            raise HTTPException(400, "La imagen debe ser menor a 10MB")
+            raise HTTPException(400, "Image must be smaller than 10MB")
         
         image = Image.open(io.BytesIO(image_data))
         if image.mode != 'RGB':
             image = image.convert('RGB')
         return image
     except UnidentifiedImageError:
-        raise HTTPException(400, "Formato de imagen no soportado")
+        raise HTTPException(400, "Unsupported image format")
     except Exception as e:
-        raise HTTPException(400, f"Error procesando imagen: {str(e)}")
+        raise HTTPException(400, f"Error processing image: {str(e)}")
 
 @router.post("/identify-dish", response_model=DishIdentificationResponse)
 async def identify_dish(image: UploadFile = File(...)):
     """
-    Identifica platos cocinados con:
-    - Todos los ingredientes detectados
-    - Instrucciones de preparación
-    - Receta similar (si existe)
+    Identifies cooked dishes with:
+    - All detected ingredients
+    - Preparation instructions
+    - Similar recipe (if available)
     """
     try:
-        # 1. Validar y procesar imagen
+        # 1. Validate and process image
         if not os.getenv("GEMINI_API_KEY"):
-            raise HTTPException(500, "API key de Gemini no configurada")
+            raise HTTPException(500, "Gemini API key not configured")
         
         pil_image = await validate_image_file(image)
 
-        # 2. Prompt optimizado
-        prompt = """Analiza este plato cocinado y devuelve:
-        - Nombre del plato (en español)
-        - Tipo (principal/entrante/postre)
-        - Todos los ingredientes visibles con estado y cantidad aproximada
-        - Origen cultural
-        - Pasos de preparación
-        - Tiempo de cocción sugerido
-        - Sugerencia de presentación
+        # 2. Optimized prompt
+        prompt = """Analyze this cooked dish and return:
+        - Dish name (in Spanish)
+        - Type (main course/starter/dessert)
+        - All visible ingredients with state and approximate quantity
+        - Cultural origin
+        - Preparation steps
+        - Suggested cooking time
+        - Presentation suggestion
 
-        Formato JSON estricto:
+        Strict JSON format:
         {
             "dish_name": "str",
             "type": "str",
@@ -105,7 +105,7 @@ async def identify_dish(image: UploadFile = File(...)):
             "serving_suggestion": "str"
         }"""
 
-        # 3. Llamada a Gemini con configuración optimizada
+        # 3. Call to Gemini with optimized configuration
         response = model.generate_content(
             [prompt, pil_image],
             generation_config={
@@ -114,37 +114,40 @@ async def identify_dish(image: UploadFile = File(...)):
             }
         )
 
-        # 4. Procesamiento de respuesta
+        # 4. Response processing
         dish_data = extract_json(response.text)
         
-        # 5. Validación de campos
+        # 5. Field validation
         required_fields = ["dish_name", "ingredients", "preparation", "origin"]
         for field in required_fields:
             if field not in dish_data:
-                raise ValueError(f"Campo requerido faltante: {field}")
+                raise ValueError(f"Missing required field: {field}")
 
-        # 6. Buscar receta similar (implementar tu lógica)
-        similar_recipe_id = None
-        # similar_recipe_id = find_similar_recipe(...)
-
-        # 7. Construir respuesta
+        # 6. Build response
         return {
             "dish_name": dish_data["dish_name"],
-            "type": dish_data.get("type", "principal"),
+            "type": dish_data.get("type", "main course"),
             "ingredients": dish_data["ingredients"],
             "origin": dish_data["origin"],
             "preparation": dish_data["preparation"],
             "cooking_time": dish_data.get("cooking_time"),
             "serving_suggestion": dish_data.get("serving_suggestion"),
-            "similar_recipe_id": similar_recipe_id,
             "success": True
         }
 
     except HTTPException:
         raise
     except ValueError as e:
-        logging.error(f"Error de validación: {str(e)}")
-        raise HTTPException(400, f"Datos inválidos: {str(e)}")
+        logging.error(f"Validation error: {str(e)}")
+        raise HTTPException(400, f"Invalid data: {str(e)}")
     except Exception as e:
-        logging.error(f"Error inesperado: {str(e)}", exc_info=True)
-        raise HTTPException(500, "Error al analizar el plato")
+        logging.error(f"Unexpected error: {str(e)}", exc_info=True)
+        raise HTTPException(500, "Error analyzing the dish")
+    
+@router.get("/upload-limits")
+async def get_upload_limits():
+    return {
+        "max_file_size_mb": 10,
+        "supported_formats": ["JPEG", "PNG", "WEBP"],
+        "max_dimensions": None
+    }

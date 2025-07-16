@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { ChefHat, Users, Target } from 'lucide-react';
+import { RecipeRequest } from '../types';
 
-const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }) => {
+interface RecipeFormProps {
+  ingredients: string[];
+  onGenerateRecipe: (params: RecipeRequest) => void;
+  isGenerating: boolean;
+}
+
+const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }: RecipeFormProps) => {
   const [calories, setCalories] = useState('');
   const [servings, setServings] = useState('2');
   const [dietaryPreferences, setDietaryPreferences] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (ingredients.length === 0) return;
 
     onGenerateRecipe({
       ingredients,
-      calories: calories ? parseInt(calories) : null,
+      calories: calories ? parseInt(calories) : undefined,
       servings: parseInt(servings),
-      dietaryPreferences
+      dietaryPreferences: dietaryPreferences || undefined
     });
   };
 
@@ -33,7 +40,7 @@ const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }) => {
         <h2 className="text-xl font-semibold text-gray-800 mb-2">Detected Ingredients</h2>
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex flex-wrap gap-2">
-            {ingredients.map((ingredient, index) => (
+            {ingredients.map((ingredient: string, index: number) => (
               <span
                 key={index}
                 className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full"
@@ -47,11 +54,12 @@ const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="calories">
             <Target className="inline mr-2" size={16} />
             Calorie Limit (optional)
           </label>
           <input
+            id="calories"
             type="number"
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
@@ -61,11 +69,12 @@ const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="servings">
             <Users className="inline mr-2" size={16} />
             Number of Servings
           </label>
           <select
+            id="servings"
             value={servings}
             onChange={(e) => setServings(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -80,10 +89,11 @@ const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="diet">
             Dietary Preferences (optional)
           </label>
           <input
+            id="diet"
             type="text"
             value={dietaryPreferences}
             onChange={(e) => setDietaryPreferences(e.target.value)}

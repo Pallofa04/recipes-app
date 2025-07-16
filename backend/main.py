@@ -1,13 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Import routers
+# Import routes
 from routers import images, recipes
 
 app = FastAPI(
@@ -44,6 +44,17 @@ async def health_check():
 @app.get("/")
 async def root():
     return {"message": "AI Recipe Generator API - Visit /docs for API documentation"}
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code,
+            "success": False
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
