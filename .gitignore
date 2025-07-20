@@ -4,7 +4,7 @@ dist/               # Carpeta de build
 dist-ssr/           # Build para SSR (Vue/Nuxt)
 .temp/              # Archivos temporales (Vite)
 .cache/             # Cache de herramientas
-.env                # Variables de entorno (¡NUNCA subir!)
+.env                # Variables de entorno
 .env.local          # Variables locales
 .env.*.local        # Otros entornos locales
 *.log               # Logs de npm/yarn/pnpm
@@ -12,27 +12,22 @@ dist-ssr/           # Build para SSR (Vue/Nuxt)
 # ──────────── Backend (Python) ────────────
 __pycache__/        # Cache de Python
 *.py[cod]           # Archivos compilados de Python
-venv/               # Entorno virtual (¡IMPORTANTE!)
-.venv/              # Alternativa común para venv
-env/                # Otra variante
+venv/               # Entorno virtual
 .python-version     # Archivo de pyenv
 
 # ──────────── Datos y Secrets ────────────
 *.env               # Cualquier archivo .env
 *.key               # Archivos de claves
 credentials.json    # Credenciales de APIs
-firebase-config.json# Configs sensibles
-data.db             # Base de datos local
-*.sqlite            # SQLite
 instance/           # Instancias de Flask
 
 # ──────────── Editors/IDEs ────────────
 .vscode/            # Config de VSCode (excepto extensions.json)
-!.vscode/extensions.json  # <- Este sí se incluye
+!.vscode/extensions.json  
 .idea/              # JetBrains IDE
 .DS_Store           # macOS
-*.suo               # Windows
-*.swp               # Vim
+*.suo             # Windows
+*.swp               # Vim  
 
 # ──────────── Sistemas Operativos ────────────
 Thumbs.db           # Windows
