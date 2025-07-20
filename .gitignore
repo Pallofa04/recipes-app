@@ -1,36 +1,12 @@
 # ──────────── Frontend (React/Vue/etc) ────────────
-node_modules/       # Dependencias de npm/yarn
 dist/               # Carpeta de build
 dist-ssr/           # Build para SSR (Vue/Nuxt)
-.temp/              # Archivos temporales (Vite)
-.cache/             # Cache de herramientas
-.env                # Variables de entorno
-.env.local          # Variables locales
-.env.*.local        # Otros entornos locales
-*.log               # Logs de npm/yarn/pnpm
+node_modules/
 
 # ──────────── Backend (Python) ────────────
 __pycache__/
-__pycache__/**
 venv/
-venv/**
 
 # ──────────── Datos y Secrets ────────────
 *.env               # Cualquier archivo .env
-*.key               # Archivos de claves
 credentials.json    # Credenciales de APIs
-instance/           # Instancias de Flask
-
-# ──────────── Editors/IDEs ────────────
-.vscode/            # Config de VSCode (excepto extensions.json)
-!.vscode/extensions.json  
-.idea/              # JetBrains IDE
-.DS_Store           # macOS
-*.suo             # Windows
-*.swp               # Vim  
-
-# ──────────── Sistemas Operativos ────────────
-Thumbs.db           # Windows
-ehthumbs.db         # Windows
-Desktop.ini         # Windows
-node_modules
