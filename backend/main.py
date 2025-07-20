@@ -29,8 +29,8 @@ app.add_middleware(
 os.makedirs("uploads", exist_ok=True)
 
 # Include routers
-app.include_router(images.router, prefix="/api/images", tags=["images"])
-app.include_router(recipes.router, prefix="/api/recipes", tags=["recipes"])
+app.include_router(images.router, prefix="/images", tags=["images"])
+app.include_router(recipes.router, prefix="/recipes", tags=["recipes"])
 
 # Health check endpoint
 @app.get("/api/health")

@@ -31,6 +31,8 @@ export interface RecipeResponse {
   calories: string;
   ingredients: string[];
   instructions: string[];
+  difficulty: string;
+  category: string;
 }
 
 export interface ApiError {

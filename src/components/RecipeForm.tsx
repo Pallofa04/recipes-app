@@ -1,116 +1,156 @@
-import { useState, FormEvent } from 'react';
-import { ChefHat, Users, Target } from 'lucide-react';
+import React, { useState } from 'react';
 import { RecipeRequest } from '../types';
 
 interface RecipeFormProps {
-  ingredients: string[];
-  onGenerateRecipe: (params: RecipeRequest) => void;
-  isGenerating: boolean;
+  onSubmit: (recipeData: RecipeRequest) => void;
+  loading?: boolean;
 }
 
-const RecipeForm = ({ ingredients, onGenerateRecipe, isGenerating }: RecipeFormProps) => {
-  const [calories, setCalories] = useState('');
-  const [servings, setServings] = useState('2');
-  const [dietaryPreferences, setDietaryPreferences] = useState('');
+const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, loading = false }) => {
+  const [ingredients, setIngredients] = useState<string[]>(['']);
+  const [calories, setCalories] = useState<string>('');
+  const [servings, setServings] = useState<number>(2);
+  const [dietaryPreferences, setDietaryPreferences] = useState<string>('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (ingredients.length === 0) return;
+    
+    // Filter out empty ingredients
+    const validIngredients = ingredients.filter(ingredient => ingredient.trim() !== '');
+    
+    if (validIngredients.length === 0) {
+      alert('Por favor, añade al menos un ingrediente');
+      return;
+    }
 
-    onGenerateRecipe({
-      ingredients,
+    const requestData: RecipeRequest = {
+      ingredients: validIngredients,
       calories: calories ? parseInt(calories) : undefined,
-      servings: parseInt(servings),
-      dietaryPreferences: dietaryPreferences || undefined
-    });
+      servings,
+      dietaryPreferences: dietaryPreferences.trim() || undefined,
+    };
+    
+    onSubmit(requestData);
   };
 
-  if (ingredients.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <ChefHat className="mx-auto text-gray-400 mb-4" size={48} />
-        <p className="text-gray-600">Upload an image to get started with recipe generation</p>
-      </div>
-    );
-  }
+  const handleIngredientChange = (index: number, value: string) => {
+    const newIngredients = [...ingredients];
+    newIngredients[index] = value;
+    setIngredients(newIngredients);
+  };
+
+  const addIngredient = () => {
+    setIngredients([...ingredients, '']);
+  };
+
+  const removeIngredient = (index: number) => {
+    if (ingredients.length > 1) {
+      const newIngredients = ingredients.filter((_, i) => i !== index);
+      setIngredients(newIngredients);
+    }
+  };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Detected Ingredients</h2>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex flex-wrap gap-2">
-            {ingredients.map((ingredient: string, index: number) => (
-              <span
-                key={index}
-                className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full"
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Generar Receta</h2>
+      
+      {/* Ingredientes */}
+      <div>
+        <label className="block text-lg font-medium text-gray-700 mb-3">
+          Ingredientes *
+        </label>
+        {ingredients.map((ingredient, index) => (
+          <div key={index} className="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              value={ingredient}
+              onChange={(e) => handleIngredientChange(index, e.target.value)}
+              placeholder={`Ingrediente ${index + 1}`}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {ingredients.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeIngredient(index)}
+                className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
               >
-                {ingredient}
-              </span>
-            ))}
+                ✕
+              </button>
+            )}
           </div>
-        </div>
+        ))}
+        <button
+          type="button"
+          onClick={addIngredient}
+          className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+        >
+          + Añadir ingrediente
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="calories">
-            <Target className="inline mr-2" size={16} />
-            Calorie Limit (optional)
-          </label>
-          <input
-            id="calories"
-            type="number"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            placeholder="e.g., 500"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+      {/* Porciones */}
+      <div>
+        <label htmlFor="servings" className="block text-lg font-medium text-gray-700 mb-2">
+          Número de porciones
+        </label>
+        <input
+          id="servings"
+          type="number"
+          min="1"
+          max="12"
+          value={servings}
+          onChange={(e) => setServings(parseInt(e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <p className="text-sm text-gray-500 mt-1">Entre 1 y 12 porciones</p>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="servings">
-            <Users className="inline mr-2" size={16} />
-            Number of Servings
-          </label>
-          <select
-            id="servings"
-            value={servings}
-            onChange={(e) => setServings(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="1">1 serving</option>
-            <option value="2">2 servings</option>
-            <option value="3">3 servings</option>
-            <option value="4">4 servings</option>
-            <option value="6">6 servings</option>
-            <option value="8">8 servings</option>
-          </select>
-        </div>
+      {/* Calorías totales */}
+      <div>
+        <label htmlFor="calories" className="block text-lg font-medium text-gray-700 mb-2">
+          Calorías totales (opcional)
+        </label>
+        <input
+          id="calories"
+          type="number"
+          min="0"
+          value={calories}
+          onChange={(e) => setCalories(e.target.value)}
+          placeholder="Ej: 800"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <p className="text-sm text-gray-500 mt-1">Calorías objetivo para toda la receta</p>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="diet">
-            Dietary Preferences (optional)
-          </label>
-          <input
-            id="diet"
-            type="text"
-            value={dietaryPreferences}
-            onChange={(e) => setDietaryPreferences(e.target.value)}
-            placeholder="e.g., vegetarian, gluten-free, low-carb"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+      {/* Preferencias dietéticas */}
+      <div>
+        <label htmlFor="dietaryPreferences" className="block text-lg font-medium text-gray-700 mb-2">
+          Preferencias dietéticas (opcional)
+        </label>
+        <textarea
+          id="dietaryPreferences"
+          value={dietaryPreferences}
+          onChange={(e) => setDietaryPreferences(e.target.value)}
+          placeholder="Ej: vegetariano, sin gluten, bajo en sodio, keto, etc."
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+        />
+        <p className="text-sm text-gray-500 mt-1">Describe cualquier restricción o preferencia dietética</p>
+      </div>
 
-        <button
-          type="submit"
-          disabled={isGenerating}
-          className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-        >
-          {isGenerating ? 'Generating Recipe...' : 'Generate Recipe'}
-        </button>
-      </form>
-    </div>
+      {/* Botón submit */}
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full py-3 px-6 rounded-md text-white font-medium transition-colors ${
+          loading
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+        }`}
+      >
+        {loading ? 'Generando receta...' : 'Generar Receta'}
+      </button>
+    </form>
   );
 };
 

@@ -30,7 +30,6 @@ class DishIdentificationResponse(BaseModel):
     preparation: List[str]
     cooking_time: Optional[str] = None
     serving_suggestion: Optional[str] = None
-    similar_recipe_id: Optional[str] = None
     success: bool
 
 def extract_json(text: str) -> Dict[str, Any]:
