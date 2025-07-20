@@ -86,10 +86,10 @@ const Home = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Camera className="w-10 h-10 text-primary-600" />
               </div>
-              <h3 className="text-h2 mb-4 text-gray-800">Subir Imagen de Ingredientes</h3>
+              <h3 className="text-h2 mb-4 text-gray-800">Subir Imagen del Plato</h3>
               <p className="text-body text-gray-600 mb-6">
-                Captura o sube una foto de tus ingredientes y deja que la IA identifique 
-                automáticamente qué puedes cocinar con ellos.
+                Captura o sube una foto de tu plato y deja que la IA identifique 
+                automáticamente cómo se cocina.
               </p>
               <div className="flex items-center justify-center gap-2 text-primary-600 font-medium">
                 <span>Comenzar con imagen</span>

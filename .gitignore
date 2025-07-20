@@ -10,10 +10,10 @@ dist-ssr/           # Build para SSR (Vue/Nuxt)
 *.log               # Logs de npm/yarn/pnpm
 
 # ──────────── Backend (Python) ────────────
-__pycache__/        # Cache de Python
-*.py[cod]           # Archivos compilados de Python
-venv/               # Entorno virtual
-.python-version     # Archivo de pyenv
+__pycache__/
+__pycache__/**
+venv/
+venv/**
 
 # ──────────── Datos y Secrets ────────────
 *.env               # Cualquier archivo .env
