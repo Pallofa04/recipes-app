@@ -9,7 +9,6 @@ import { supabase } from './supabase/supabase';
 import type {
   User,
   AuthError,
-  Session,
   AuthResponse,
 } from '@supabase/supabase-js';
 
