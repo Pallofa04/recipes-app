@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import routes
-from routers import images, recipes
+from routers import images, recipes, auth
 
 app = FastAPI(
     title="AI Recipe Generator API",
@@ -31,6 +31,8 @@ os.makedirs("uploads", exist_ok=True)
 # Include routers
 app.include_router(images.router, prefix="/images", tags=["images"])
 app.include_router(recipes.router, prefix="/recipes", tags=["recipes"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+
 
 # Health check endpoint
 @app.get("/api/health")

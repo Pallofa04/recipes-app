@@ -44,11 +44,8 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       {/* Header */}
       <header className="container pt-8 pb-4">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-            <ChefHat className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-display-2 bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
+        <div className="text-center mb-2">
+          <h1 className="text-display-2 font-bold text-gray-800 mb-1">
             RecipeGen
           </h1>
         </div>
