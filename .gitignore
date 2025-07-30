@@ -1,6 +1,6 @@
 # ──────────── Frontend (React/Vue/etc) ────────────
-dist/               # Carpeta de build
-dist-ssr/           # Build para SSR (Vue/Nuxt)
+dist/              
+dist-ssr/           
 node_modules/
 
 # ──────────── Backend (Python) ────────────
@@ -8,5 +8,5 @@ __pycache__/
 venv/
 
 # ──────────── Datos y Secrets ────────────
-*.env               # Cualquier archivo .env
-credentials.json    # Credenciales de APIs
+*.env               
+credentials.json   
