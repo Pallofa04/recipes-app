@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../api/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function SignUpForm() {
-  const { signUp } = useAuth();
+  const { signUp } = useAuth(); // Eliminamos isGuest y migrateGuestData
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
-  // Función para verificar si el usuario ya existe
   const checkUserExists = async (email: string): Promise<boolean> => {
     try {
       const response = await fetch(
@@ -28,20 +28,18 @@ export default function SignUpForm() {
     setError('');
     setSuccess(false);
 
-    // Verificar si el usuario ya existe antes de registrarlo
     const exists = await checkUserExists(email);
     if (exists) {
       setError('Este usuario ya está registrado. ¿Quieres iniciar sesión?');
       return;
     }
 
-    // Si no existe, procedemos con el registro
-    const { error } = await signUp(email, password);
-    if (error) {
-      setError(error.message);
-      setSuccess(false);
+    const { error: signUpError } = await signUp(email, password);
+    if (signUpError) {
+      setError(signUpError.message);
     } else {
       setSuccess(true);
+      setTimeout(() => navigate('/'), 2000);
     }
   };
 
@@ -81,7 +79,7 @@ export default function SignUpForm() {
 
       {success && (
         <div className="text-green-600">
-          ¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.
+          ¡Registro exitoso! Serás redirigido a la página principal.
         </div>
       )}
 

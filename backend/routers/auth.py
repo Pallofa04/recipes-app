@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from services.supabase_client import supabase
 
 router = APIRouter()
 
 @router.get("/check-user")
-def check_user(email: str = Query(..., description="Email del usuario")):
+async def check_user(email: str = Query(..., description="Email del usuario")):
     try:
-        response = supabase.auth.admin.list_users()
-        user_exists = any(u["email"] == email for u in response["users"])
-        return {"exists": user_exists}
+        response = supabase.rpc('user_exists', {'user_email': email}).execute()
+        return {"exists": response.data}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))

@@ -12,54 +12,69 @@ import type {
   AuthResponse,
 } from '@supabase/supabase-js';
 
-// Interfaz para el contexto de autenticación
 interface AuthContextType {
   user: User | null;
+  isGuest: boolean;
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signIn: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
+  signInAsGuest: () => void;
 }
 
-// Crear el contexto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Proveedor del contexto
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    // Obtener el usuario actual al montar
+    // Verificar sesión de invitado al cargar
+    const guestStatus = localStorage.getItem('isGuest') === 'true';
+    setIsGuest(guestStatus);
+
+    // Obtener usuario de Supabase
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
-    // Escuchar cambios en la autenticación
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
+        if (session?.user) {
+          setIsGuest(false);
+          localStorage.removeItem('isGuest');
+        }
       }
     );
 
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
+    return () => listener?.subscription.unsubscribe();
   }, []);
 
-  const signUp = (email: string, password: string) =>
-    supabase.auth.signUp({ email, password });
+  const signInAsGuest = () => {
+    setIsGuest(true);
+    localStorage.setItem('isGuest', 'true');
+  };
 
-  const signIn = (email: string, password: string) =>
-    supabase.auth.signInWithPassword({ email, password });
-
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    setIsGuest(false);
+    localStorage.removeItem('isGuest');
+    return await supabase.auth.signOut();
+  };
 
   return (
-    <AuthContext.Provider value={{ user, signUp, signIn, signOut }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        isGuest,
+        signUp: (email, password) => supabase.auth.signUp({ email, password }),
+        signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+        signOut,
+        signInAsGuest
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
-//
 
-// Hook personalizado para consumir el contexto
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
