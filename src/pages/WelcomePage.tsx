@@ -7,7 +7,7 @@ const WelcomePage = () => {
 
   const handleGuestEntry = () => {
     signInAsGuest();
-    navigate('/');
+    navigate('/home');
   };
 
   return (
