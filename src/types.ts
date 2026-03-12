@@ -5,6 +5,7 @@ export interface IngredientInfo {
 }
 
 export interface DishIdentificationResponse {
+  id: string | null;
   dish_name: string;
   type: string;
   ingredients: IngredientInfo[];
@@ -18,24 +19,60 @@ export interface DishIdentificationResponse {
 
 export interface RecipeRequest {
   ingredients: string[];
-  calories?: number;
   servings: number;
+  calories?: number;
   dietaryPreferences?: string;
+  user_id: string;
 }
 
 export interface RecipeResponse {
+  id: string;
   name: string;
   description: string;
-  prepTime: string;
+  prep_time: string;
   servings: number;
-  calories: string;
-  ingredients: string[];
+  calories: number;
+  ingredients: string[] | IngredientInfo[];
   instructions: string[];
-  difficulty: string;
-  category: string;
+  created_at: string;
+}
+
+export interface RecipeContent {
+  name: string;
+  description: string;
+  ingredients: string[] | IngredientInfo[];
+  instructions: string[];
+  prep_time?: string;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  description: string;
+  prep_time: string;
+  servings: number;
+  calories?: number;
+  created_at: string;
+  source?: string;
+  ingredients?: any[];
+  instructions?: string[];
+  content_en?: RecipeContent;
+  content_es?: RecipeContent;
+}
+
+export interface FavoriteResponse {
+  status: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  created_at: string;
+  email_confirmed_at?: string;
 }
 
 export interface ApiError {
   detail: string;
   error?: string;
 }
+
