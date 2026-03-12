@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../api/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function SignUpForm() {
   const { signUp, resendConfirmationEmail } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -14,6 +17,19 @@ export default function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    
+    // Validar que las contraseñas coincidan
+    if (password !== confirmPassword) {
+      setError(t('signup.passwordMismatch'));
+      return;
+    }
+
+    // Validar longitud mínima de contraseña
+    if (password.length < 6) {
+      setError(t('signup.passwordShort'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -23,15 +39,15 @@ export default function SignUpForm() {
         throw signUpError;
       }
 
-      // Verificar si el usuario ya existe (typo corregido: identities en lugar de identities)
+      // Verificar si el usuario ya existe
       if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setError('This email is already registered.');
+        setError(t('signup.emailAlreadyRegistered'));
         return;
       }
 
       setEmailSent(true);
-    } catch (err: any) { // Tipo any temporal para evitar errores
-      setError(err.message || 'An error occurred during registration');
+    } catch (err: any) {
+      setError(err.message || t('signup.signupError'));
     } finally {
       setIsLoading(false);
     }
@@ -41,9 +57,9 @@ export default function SignUpForm() {
     setIsLoading(true);
     try {
       await resendConfirmationEmail(email);
-      alert('Confirmation email resent successfully!');
+      alert(t('signup.resent'));
     } catch (err: any) {
-      setError(err.message || 'Failed to resend confirmation email');
+      setError(err.message || t('signup.resendError'));
     } finally {
       setIsLoading(false);
     }
@@ -52,18 +68,17 @@ export default function SignUpForm() {
   if (emailSent) {
     return (
       <div className="max-w-sm mx-auto space-y-4 text-center">
-        <h2 className="text-xl font-bold">Verify Your Email</h2>
+        <h2 className="text-xl font-bold">{t('signup.verificationTitle')}</h2>
         <p className="text-gray-600">
-          We've sent a confirmation link to <strong>{email}</strong>.
-          Please check your inbox and click the link to verify your account.
+          {t('signup.verificationMessage')} <strong>{email}</strong>. {t('signup.verificationInstruction')}
         </p>
         <p className="text-sm text-gray-500">
-          Didn't receive the email? <button 
+          {t('signup.noEmail')} <button 
             onClick={handleResendEmail}
             className="text-green-600 hover:underline"
             disabled={isLoading}
           >
-            {isLoading ? 'Sending...' : 'Resend'}
+            {isLoading ? t('signup.sending') : t('signup.resend')}
           </button>
         </p>
         {error && <div className="text-red-600">{error}</div>}
@@ -73,37 +88,56 @@ export default function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
-      <h2 className="text-xl font-bold">Sign Up</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="input w-full"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="input w-full"
-        required
-      />
+      <h2 className="text-xl font-bold">{t('signup.title')}</h2>
+      
+      <div>
+        <input
+          type="email"
+          placeholder={t('signup.email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <input
+          type="password"
+          placeholder={t('signup.password')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input w-full"
+          required
+          minLength={6}
+        />
+      </div>
+
+      <div>
+        <input
+          type="password"
+          placeholder={t('signup.confirmPassword')}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="input w-full"
+          required
+          minLength={6}
+        />
+      </div>
 
       {error && (
         <div className="text-red-600">
           {error}
           {/* Mostrar enlace a Sign In cuando hay error de registro */}
-          {(error.includes('already registered') || error.includes('already exists')) && (
+          {(error.includes('ya está registrado') || error.includes('already exists')) && (
             <div className="mt-2">
-              <span className="text-gray-600">Already have an account? </span>
+              <span className="text-gray-600">{t('signup.alreadyHaveAccount')} </span>
               <Link 
                 to="/login" 
                 className="text-green-600 underline hover:text-green-700"
                 onClick={() => navigate('/login', { state: { email } })}
               >
-                Sign in here
+                {t('signup.signInHere')}
               </Link>
             </div>
           )}
@@ -115,16 +149,16 @@ export default function SignUpForm() {
         className="btn w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
         disabled={isLoading}
       >
-        {isLoading ? 'Processing...' : 'Sign Up'}
+        {isLoading ? t('signup.processing') : t('common.signUp')}
       </button>
 
       <div className="text-center text-gray-600">
-        Already have an account?{' '}
+        {t('signup.alreadyHaveAccount')}{' '}
         <Link 
           to="/login" 
           className="text-green-600 underline hover:text-green-700"
         >
-          Sign in
+          {t('common.signIn')}
         </Link>
       </div>
     </form>

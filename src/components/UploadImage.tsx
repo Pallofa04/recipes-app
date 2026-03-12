@@ -1,17 +1,21 @@
 import { useState, useRef } from 'react';
 import { Upload, Camera, Image, X, Check, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../api/AuthContext'; 
 
 interface UploadImageProps {
-  onImageUpload: (file: File) => void;
+  onImageUpload: (file: File, isGuest: boolean) => void; 
   isAnalyzing: boolean;
 }
 
 const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
+  const { t } = useTranslation();
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isGuest } = useAuth();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -46,20 +50,20 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
   const handleFile = (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Por favor, selecciona solo archivos de imagen');
+      setError(t('uploadImage.invalidType'));
       return;
     }
 
     // Validate file size (10MB limit to match backend)
     if (file.size > 10 * 1024 * 1024) {
-      setError('El archivo debe ser menor a 10MB');
+      setError(t('uploadImage.invalidSize'));
       return;
     }
 
     // Validate supported formats
     const supportedFormats = ['image/jpeg', 'image/png', 'image/webp'];
     if (!supportedFormats.includes(file.type)) {
-      setError('Formato no soportado. Usa JPG, PNG o WEBP');
+      setError(t('uploadImage.invalidFormat'));
       return;
     }
 
@@ -75,7 +79,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
 
   const handleSubmit = () => {
     if (selectedFile) {
-      onImageUpload(selectedFile);
+      onImageUpload(selectedFile, isGuest);
     }
   };
 
@@ -101,7 +105,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
           </div>
           <h1 className="text-h1 mb-2 text-gray-800">Identificar Plato Cocido</h1>
           <p className="text-body text-gray-600">
-            Sube una foto de tu plato cocido para obtener información detallada sobre la receta
+            {t('uploadImage.subtitle')}
           </p>
         </div>
 
@@ -135,10 +139,10 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   <Upload className="w-10 h-10 text-gray-400" />
                 </div>
                 <h3 className="text-h3 mb-2 text-gray-800">
-                  Arrastra tu imagen aquí o haz clic para subir
+                  {t('uploadImage.dragTitle')}
                 </h3>
                 <p className="text-body-sm text-gray-500 mb-4">
-                  Formatos soportados: JPG, PNG, WEBP (máx. 10MB)
+                  {t('uploadImage.dragFormats')}
                 </p>
               </div>
 
@@ -156,7 +160,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   disabled={isAnalyzing}
                 >
                   <Image className="w-5 h-5" />
-                  Seleccionar Archivo
+                  {t('uploadImage.selectFile')}
                 </button>
                 <button
                   onClick={openFileDialog}
@@ -164,7 +168,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   disabled={isAnalyzing}
                 >
                   <Camera className="w-5 h-5" />
-                  Tomar Foto
+                  {t('uploadImage.takePhoto')}
                 </button>
               </div>
             </div>
@@ -176,7 +180,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   <button
                     onClick={clearSelection}
                     className="absolute top-2 right-2 btn btn-icon bg-red-500 hover:bg-red-600 text-white w-8 h-8"
-                    title="Eliminar imagen seleccionada"
+                    title={t('uploadImage.removeSelected')}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -193,10 +197,10 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   </div>
                   <div>
                     <p className="text-body-sm font-medium text-green-800">
-                      Imagen seleccionada: {selectedFile.name}
+                      {t('uploadImage.imageSelected')} {selectedFile.name}
                     </p>
                     <p className="text-caption text-green-600">
-                      Tamaño: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      {t('uploadImage.size')} {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                 </div>
@@ -212,12 +216,12 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   {isAnalyzing ? (
                     <>
                       <div className="spinner" />
-                      Analizando plato...
+                      {t('uploadImage.analyzing')}
                     </>
                   ) : (
                     <>
                       <Camera className="w-5 h-5" />
-                      Identificar Plato
+                      {t('uploadImage.identifyDish')}
                     </>
                   )}
                 </button>
@@ -226,7 +230,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   disabled={isAnalyzing}
                   className="btn btn-outline"
                 >
-                  Cambiar Imagen
+                  {t('uploadImage.changeImage')}
                 </button>
               </div>
             </div>
@@ -239,14 +243,15 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
         <div className="card">
           <div className="card-body">
             <h3 className="text-h3 mb-4 text-gray-800">💡 Consejos para mejores resultados</h3>
+            <h3 className="text-h3 mb-4 text-gray-800">💡 {t('uploadImage.tipsTitle')}</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex gap-3">
                 <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-primary-600 text-sm">1</span>
                 </div>
                 <div>
-                  <p className="text-body-sm font-medium text-gray-800">Buena iluminación</p>
-                  <p className="text-caption text-gray-600">Asegúrate de que el plato esté bien iluminado</p>
+                  <p className="text-body-sm font-medium text-gray-800">{t('uploadImage.tip1Title')}</p>
+                  <p className="text-caption text-gray-600">{t('uploadImage.tip1Desc')}</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -254,8 +259,8 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   <span className="text-primary-600 text-sm">2</span>
                 </div>
                 <div>
-                  <p className="text-body-sm font-medium text-gray-800">Plato completo</p>
-                  <p className="text-caption text-gray-600">Incluye todo el plato en la imagen para mejor identificación</p>
+                  <p className="text-body-sm font-medium text-gray-800">{t('uploadImage.tip2Title')}</p>
+                  <p className="text-caption text-gray-600">{t('uploadImage.tip2Desc')}</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -263,8 +268,8 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   <span className="text-primary-600 text-sm">3</span>
                 </div>
                 <div>
-                  <p className="text-body-sm font-medium text-gray-800">Ángulo frontal</p>
-                  <p className="text-caption text-gray-600">Toma la foto desde arriba o de frente al plato</p>
+                  <p className="text-body-sm font-medium text-gray-800">{t('uploadImage.tip3Title')}</p>
+                  <p className="text-caption text-gray-600">{t('uploadImage.tip3Desc')}</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -272,8 +277,8 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                   <span className="text-primary-600 text-sm">4</span>
                 </div>
                 <div>
-                  <p className="text-body-sm font-medium text-gray-800">Imagen nítida</p>
-                  <p className="text-caption text-gray-600">Evita imágenes borrosas para mejor reconocimiento</p>
+                  <p className="text-body-sm font-medium text-gray-800">{t('uploadImage.tip4Title')}</p>
+                  <p className="text-caption text-gray-600">{t('uploadImage.tip4Desc')}</p>
                 </div>
               </div>
             </div>

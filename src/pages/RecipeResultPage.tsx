@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChefHat, RotateCcw, Heart } from 'lucide-react';
+import { ArrowLeft, ChefHat, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import RecipeDisplay from '../components/RecipeDisplay';
-// import { RecipeResponse } from '../types';
+import FavoriteToggle from '../components/FavoriteToggle';
 
 const RecipeResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { recipe } = location.state || {};
 
   const handleGenerateAnother = () => {
@@ -16,23 +18,17 @@ const RecipeResultPage = () => {
     navigate('/upload-image');
   };
 
-  const handleSaveRecipe = () => {
-    alert('Funcionalidad de guardado próximamente');
-  };
-
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       {/* Header */}
       <header className="container py-6">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="btn btn-ghost"
           >
             <ArrowLeft className="w-5 h-5" />
-            Volver al inicio
+            {t('common.backHome')}
           </button>
           
           <div className="flex items-center gap-3">
@@ -53,10 +49,10 @@ const RecipeResultPage = () => {
               <ChefHat className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-display-1 mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              ¡Receta Generada!
+              {t('recipeResult.title')}
             </h1>
             <p className="text-body-lg text-gray-600">
-              Tu receta personalizada está lista para cocinar
+              {t('recipeResult.subtitle')}
             </p>
           </div>
 
@@ -73,7 +69,7 @@ const RecipeResultPage = () => {
                 className="btn btn-primary"
               >
                 <RotateCcw className="w-4 h-4" />
-                Generar Otra Receta
+                {t('recipeResult.generateAnother')}
               </button>
               
               <button
@@ -81,34 +77,28 @@ const RecipeResultPage = () => {
                 className="btn btn-outline"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Probar con Imagen
+                {t('recipeResult.tryWithImage')}
               </button>
             </div>
             
-            <div className="flex gap-2">
-              <button
-                onClick={handleSaveRecipe}
-                className="btn btn-outline btn-icon"
-                title="Guardar receta"
-              >
-                <Heart className="w-4 h-4" />
-              </button>
-            </div>
+            {recipe?.id && (
+              <FavoriteToggle recipeId={recipe.id} size="lg" />
+            )}
           </div>
 
           {/* Additional Tips */}
           <div className="mt-12 animate-fade-in animate-delay-300ms">
             <div className="card">
               <div className="card-body">
-                <h3 className="text-h3 mb-4 text-gray-800">💡 Consejos adicionales</h3>
+                <h3 className="text-h3 mb-4 text-gray-800">💡 {t('recipeResult.tipsTitle')}</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex gap-3">
                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-primary-600 text-sm">1</span>
                     </div>
                     <div>
-                      <p className="text-body-sm font-medium text-gray-800">Variaciones</p>
-                      <p className="text-caption text-gray-600">Puedes sustituir ingredientes según lo que tengas disponible</p>
+                      <p className="text-body-sm font-medium text-gray-800">{t('recipeResult.tip1Title')}</p>
+                      <p className="text-caption text-gray-600">{t('recipeResult.tip1Desc')}</p>
                     </div>
                   </div>
                   <div className="flex gap-3">
@@ -116,8 +106,8 @@ const RecipeResultPage = () => {
                       <span className="text-primary-600 text-sm">2</span>
                     </div>
                     <div>
-                      <p className="text-body-sm font-medium text-gray-800">Tiempos</p>
-                      <p className="text-caption text-gray-600">Los tiempos de cocción pueden variar según tu estufa</p>
+                      <p className="text-body-sm font-medium text-gray-800">{t('recipeResult.tip2Title')}</p>
+                      <p className="text-caption text-gray-600">{t('recipeResult.tip2Desc')}</p>
                     </div>
                   </div>
                 </div>

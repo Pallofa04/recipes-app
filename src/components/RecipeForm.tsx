@@ -1,36 +1,55 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RecipeRequest } from '../types';
+import { useAuth } from '../api/AuthContext'; 
 
 interface RecipeFormProps {
-  onSubmit: (recipeData: RecipeRequest) => void;
-  loading?: boolean;
+  onSubmit: (recipeData: Omit<RecipeRequest, 'user_id'>, isGuest: boolean) => Promise<void>;
+  loading: boolean;
+  initialServings?: number;
 }
 
-const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, loading = false }) => {
+const RecipeForm: React.FC<RecipeFormProps> = ({ 
+  onSubmit, 
+  loading = false, 
+  initialServings = 2 
+}) => {
+  const { user, isGuest } = useAuth(); // Añadir isGuest
+  const { t } = useTranslation();
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [calories, setCalories] = useState<string>('');
-  const [servings, setServings] = useState<number>(2);
+  const [servings, setServings] = useState<number>(initialServings);
   const [dietaryPreferences, setDietaryPreferences] = useState<string>('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Permitir tanto usuarios registrados como guests
+    if (!user?.id && !isGuest) {
+      alert(t('recipeForm.needAuth'));
+      return;
+    }
     
     // Filter out empty ingredients
     const validIngredients = ingredients.filter(ingredient => ingredient.trim() !== '');
     
     if (validIngredients.length === 0) {
-      alert('Por favor, añade al menos un ingrediente');
+      alert(t('recipeForm.needIngredient'));
       return;
     }
 
-    const requestData: RecipeRequest = {
+    const requestData: Omit<RecipeRequest, 'user_id'> = {
       ingredients: validIngredients,
-      calories: calories ? parseInt(calories) : undefined,
       servings,
+      calories: calories ? parseInt(calories) : undefined,
       dietaryPreferences: dietaryPreferences.trim() || undefined,
     };
     
-    onSubmit(requestData);
+    try {
+      await onSubmit(requestData, isGuest); // Pasar isGuest
+    } catch (error) {
+      console.error('Error generating recipe:', error);
+    }
   };
 
   const handleIngredientChange = (index: number, value: string) => {
@@ -51,104 +70,113 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, loading = false }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Generar Receta</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+      <h2 className="text-lg font-semibold text-gray-800">{t('recipeForm.title')}</h2>
       
-      {/* Ingredientes */}
-      <div>
-        <label className="block text-lg font-medium text-gray-700 mb-3">
-          Ingredientes *
-        </label>
-        {ingredients.map((ingredient, index) => (
-          <div key={index} className="flex items-center gap-2 mb-2">
-            <input
-              type="text"
-              value={ingredient}
-              onChange={(e) => handleIngredientChange(index, e.target.value)}
-              placeholder={`Ingrediente ${index + 1}`}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {ingredients.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeIngredient(index)}
-                className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-              >
-                ✕
-              </button>
-            )}
+      {isGuest && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+          <p className="text-yellow-800 text-xs flex items-center gap-1">
+            <span>⚠️</span>
+            {t('recipeForm.guestMode')}
+          </p>
+        </div>
+      )}
+      
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Ingredientes */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('recipeForm.ingredients')}
+          </label>
+          <div className="space-y-2">
+            {ingredients.map((ingredient, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={ingredient}
+                  onChange={(e) => handleIngredientChange(index, e.target.value)}
+                  placeholder={t('recipeForm.ingredientPlaceholder', { index: index + 1 })}
+                  className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {ingredients.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(index)}
+                    className="px-2 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addIngredient}
+              className="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              {t('recipeForm.addIngredient')}
+            </button>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={addIngredient}
-          className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-        >
-          + Añadir ingrediente
-        </button>
+        </div>
+
+        {/* Porciones */}
+        <div>
+          <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">
+            {t('recipeForm.servings')}
+          </label>
+          <input
+            id="servings"
+            type="number"
+            min="1"
+            max="12"
+            value={servings}
+            onChange={(e) => setServings(parseInt(e.target.value))}
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Calorías */}
+        <div>
+          <label htmlFor="calories" className="block text-sm font-medium text-gray-700 mb-2">
+            {t('recipeForm.calories')}
+          </label>
+          <input
+            id="calories"
+            type="number"
+            min="0"
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
+            placeholder={t('recipeForm.caloriesPlaceholder')}
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Preferencias dietéticas */}
+        <div className="md:col-span-2">
+          <label htmlFor="dietaryPreferences" className="block text-sm font-medium text-gray-700 mb-2">
+            {t('recipeForm.dietaryPreferences')}
+          </label>
+          <textarea
+            id="dietaryPreferences"
+            value={dietaryPreferences}
+            onChange={(e) => setDietaryPreferences(e.target.value)}
+            placeholder={t('recipeForm.dietaryPlaceholder')}
+            rows={2}
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
+          />
+        </div>
       </div>
 
-      {/* Porciones */}
-      <div>
-        <label htmlFor="servings" className="block text-lg font-medium text-gray-700 mb-2">
-          Número de porciones
-        </label>
-        <input
-          id="servings"
-          type="number"
-          min="1"
-          max="12"
-          value={servings}
-          onChange={(e) => setServings(parseInt(e.target.value))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <p className="text-sm text-gray-500 mt-1">Entre 1 y 12 porciones</p>
-      </div>
-
-      {/* Calorías totales */}
-      <div>
-        <label htmlFor="calories" className="block text-lg font-medium text-gray-700 mb-2">
-          Calorías totales (opcional)
-        </label>
-        <input
-          id="calories"
-          type="number"
-          min="0"
-          value={calories}
-          onChange={(e) => setCalories(e.target.value)}
-          placeholder="Ej: 800"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <p className="text-sm text-gray-500 mt-1">Calorías objetivo para toda la receta</p>
-      </div>
-
-      {/* Preferencias dietéticas */}
-      <div>
-        <label htmlFor="dietaryPreferences" className="block text-lg font-medium text-gray-700 mb-2">
-          Preferencias dietéticas (opcional)
-        </label>
-        <textarea
-          id="dietaryPreferences"
-          value={dietaryPreferences}
-          onChange={(e) => setDietaryPreferences(e.target.value)}
-          placeholder="Ej: vegetariano, sin gluten, bajo en sodio, keto, etc."
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-        />
-        <p className="text-sm text-gray-500 mt-1">Describe cualquier restricción o preferencia dietética</p>
-      </div>
-
-      {/* Botón submit */}
       <button
         type="submit"
-        disabled={loading}
-        className={`w-full py-3 px-6 rounded-md text-white font-medium transition-colors ${
-          loading
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+        disabled={loading || (!user?.id && !isGuest)}
+        className={`w-full py-2 px-4 text-sm rounded font-medium transition-colors ${
+          loading || (!user?.id && !isGuest)
+            ? 'bg-gray-400 cursor-not-allowed text-white'
+            : 'bg-blue-600 hover:bg-blue-700 text-white'
         }`}
       >
-        {loading ? 'Generando receta...' : 'Generar Receta'}
+        {loading ? t('recipeForm.generating') : (!user?.id && !isGuest) ? t('recipeForm.signIn') : t('common.generateRecipe')}
       </button>
     </form>
   );

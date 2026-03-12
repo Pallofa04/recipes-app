@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../api/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function LoginForm() {
   const { signIn } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,13 +22,13 @@ export default function LoginForm() {
       const errorText = error.message.toLowerCase();
 
       if (errorText.includes('invalid login credentials')) {
-        setError('Incorrect email or password.');
+        setError(t('login.invalidCredentials'));
       } else if (errorText.includes('user not found') || errorText.includes('no user')) {
-        setError('No account found with that email.');
+        setError(t('login.noAccountFound'));
       } else if (errorText.includes('email not confirmed')) {
-        setError('Please confirm your email before logging in.');
+        setError(t('login.emailNotConfirmed'));
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        setError(t('login.unexpectedError'));
       }
     } else {
       navigate('/home');
@@ -35,11 +37,11 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
-      <h2 className="text-xl font-bold">Sign in</h2>
+      <h2 className="text-xl font-bold">{t('login.title')}</h2>
 
       <input
         type="email"
-        placeholder="Email"
+        placeholder={t('login.email')}
         value={email}
         onChange={e => setEmail(e.target.value)}
         className="input w-full"
@@ -48,7 +50,7 @@ export default function LoginForm() {
 
       <input
         type="password"
-        placeholder="Password"
+        placeholder={t('login.password')}
         value={password}
         onChange={e => setPassword(e.target.value)}
         className="input w-full"
@@ -58,16 +60,16 @@ export default function LoginForm() {
       {error && <div className="text-red-600">{error}</div>}
 
       <button type="submit" className="btn btn-primary w-full">
-        Sign in
+        {t('common.signIn')}
       </button>
 
       <div className="text-center text-gray-600">
-        Don't you have an account?{' '}
+        {t('login.noAccount')}{' '}
         <Link 
-          to="/signUp" 
+          to="/signup" 
           className="text-green-600 underline hover:text-green-700"
         >
-          Sign Up
+          {t('common.signUp')}
         </Link>
       </div>
       

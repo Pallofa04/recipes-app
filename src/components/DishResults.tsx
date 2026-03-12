@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChefHat, Clock, MapPin, Users, Utensils, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientInfo {
   name: string;
@@ -25,6 +26,7 @@ interface DishResultsProps {
 }
 
 const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
+  const { t } = useTranslation();
   const [expandedSections, setExpandedSections] = useState({
     ingredients: true,
     preparation: false,
@@ -47,13 +49,13 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Utensils className="w-8 h-8 text-gray-400" />
             </div>
-            <h2 className="text-h2 mb-2 text-gray-800">No hay resultados</h2>
+            <h2 className="text-h2 mb-2 text-gray-800">{t('dishResults.noResults')}</h2>
             <p className="text-body text-gray-600 mb-6">
-              No se recibieron datos del análisis.
+              {t('dishResults.noData')}
             </p>
             <button onClick={onReset} className="btn btn-primary">
               <RotateCcw className="w-5 h-5" />
-              Intentar de nuevo
+              {t('dishResults.tryAgain')}
             </button>
           </div>
         </div>
@@ -79,12 +81,12 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
 
   const getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      'starter': 'Entrante',
-      'main course': 'Plato Principal',
-      'dessert': 'Postre',
-      'entrante': 'Entrante',
-      'plato principal': 'Plato Principal',
-      'postre': 'Postre'
+      'starter': t('dishResults.typeStarter'),
+      'main course': t('dishResults.typeMain'),
+      'dessert': t('dishResults.typeDessert'),
+      'entrante': t('dishResults.typeStarter'),
+      'plato principal': t('dishResults.typeMain'),
+      'postre': t('dishResults.typeDessert')
     };
     return typeMap[type.toLowerCase()] || type;
   };
@@ -97,13 +99,13 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
             <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Utensils className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-h2 mb-2 text-red-800">Error en el análisis</h2>
+            <h2 className="text-h2 mb-2 text-red-800">{t('dishResults.analysisError')}</h2>
             <p className="text-body text-gray-600 mb-6">
-              No se pudo identificar el plato en la imagen. Por favor, intenta con otra imagen.
+              {t('dishResults.analysisErrorDesc')}
             </p>
             <button onClick={onReset} className="btn btn-primary">
               <RotateCcw className="w-5 h-5" />
-              Intentar de nuevo
+              {t('dishResults.tryAgain')}
             </button>
           </div>
         </div>
@@ -142,14 +144,14 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 text-body-sm">
                   <MapPin className="w-4 h-4 text-primary-600" />
-                  <span className="text-gray-600">Origen:</span>
+                  <span className="text-gray-600">{t('dishResults.origin')}</span>
                   <span className="font-medium">{result.origin}</span>
                 </div>
                 
                 {result.cooking_time && (
                   <div className="flex items-center gap-2 text-body-sm">
                     <Clock className="w-4 h-4 text-primary-600" />
-                    <span className="text-gray-600">Tiempo:</span>
+                    <span className="text-gray-600">{t('dishResults.time')}</span>
                     <span className="font-medium">{result.cooking_time}</span>
                   </div>
                 )}
@@ -160,7 +162,7 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
           <div className="flex justify-center mt-6">
             <button onClick={onReset} className="btn btn-outline">
               <RotateCcw className="w-5 h-5" />
-              Analizar otro plato
+              {t('dishResults.analyzeAnother')}
             </button>
           </div>
         </div>
@@ -175,7 +177,7 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
           >
             <div className="flex items-center gap-3">
               <ChefHat className="w-5 h-5 text-primary-600" />
-              <h2 className="text-h2">Ingredientes Identificados</h2>
+              <h2 className="text-h2">{t('dishResults.identifiedIngredients')}</h2>
               <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-caption font-medium">
                 {result.ingredients?.length || 0}
               </span>
@@ -198,13 +200,13 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
                     {ingredient.state && (
                       <div className="flex items-center gap-2 text-body-sm text-gray-600">
                         <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                        <span>Estado: {ingredient.state}</span>
+                        <span>{t('dishResults.state')} {ingredient.state}</span>
                       </div>
                     )}
                     {ingredient.quantity && (
                       <div className="flex items-center gap-2 text-body-sm text-gray-600">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        <span>Cantidad: {ingredient.quantity}</span>
+                        <span>{t('dishResults.quantity')} {ingredient.quantity}</span>
                       </div>
                     )}
                   </div>
@@ -224,9 +226,9 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
           >
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-primary-600" />
-              <h2 className="text-h2">Preparación</h2>
+              <h2 className="text-h2">{t('dishResults.preparation')}</h2>
               <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-caption font-medium">
-                {result.preparation?.length || 0} pasos
+                {t('dishResults.steps', { count: result.preparation?.length || 0 })}
               </span>
             </div>
             {expandedSections.preparation ? (
@@ -263,7 +265,7 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
             >
               <div className="flex items-center gap-3">
                 <Utensils className="w-5 h-5 text-primary-600" />
-                <h2 className="text-h2">Sugerencias de Presentación</h2>
+                <h2 className="text-h2">{t('dishResults.servingSuggestions')}</h2>
               </div>
               {expandedSections.details ? (
                 <ChevronUp className="w-5 h-5 text-gray-400" />

@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChefHat } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import UploadImage from '../components/UploadImage';
 import { analyzeImage } from '../api/images';
-// import { ApiError } from '../types';
+import { useAuth } from '../api/AuthContext'; // Añadir esta importación
 
 const UploadImagePage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useAuth(); // Añadir esto
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = async (file: File, isGuestMode: boolean) => { 
     setIsAnalyzing(true);
     try {
-      const result = await analyzeImage(file);
+      const userId = isGuestMode ? 'guest' : user?.id; // Determinar user_id
+      const result = await analyzeImage(file, userId); // Pasar user_id
       
       // Create a blob URL for the uploaded image to pass to results
       const imageUrl = URL.createObjectURL(file);
@@ -22,14 +26,15 @@ const UploadImagePage = () => {
         state: { 
           result: result,
           imageUrl: imageUrl,
-          fileName: file.name
+          fileName: file.name,
+          isGuest: isGuestMode // Pasar si es guest
         } 
       });
     } catch (error: unknown) {
       console.error('Error analyzing image:', error);
       
       // Handle axios errors with proper type checking
-      let errorMessage = 'Error desconocido al analizar la imagen';
+      let errorMessage = t('uploadImage.pageError');
       
       // Check if it's an axios error
       if (error && typeof error === 'object' && 'response' in error) {
@@ -43,7 +48,7 @@ const UploadImagePage = () => {
         errorMessage = error.message;
       }
       
-      alert(`Error al analizar la imagen: ${errorMessage}`);
+      alert(`${t('uploadImage.pageErrorPrefix')} ${errorMessage}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -55,11 +60,11 @@ const UploadImagePage = () => {
       <header className="container py-6">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="btn btn-ghost"
           >
             <ArrowLeft className="w-5 h-5" />
-            Volver al inicio
+            {t('common.backHome')}
           </button>
           
           <div className="flex items-center gap-3">
