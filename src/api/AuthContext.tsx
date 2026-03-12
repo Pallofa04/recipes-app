@@ -34,42 +34,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Función para refrescar la sesión
   const refreshSession = async () => {
-    setIsLoading(true);
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
       
       setUser(session?.user ?? null);
-      setIsEmailVerified(session?.user?.email_confirmed_at !== null);
-      
-      if (session?.user) {
-        setIsGuest(false);
-        localStorage.removeItem('isGuest');
+        setIsEmailVerified(!!session?.user?.email_confirmed_at);
+        
+        if (session?.user) {
+          setIsGuest(false);
+          localStorage.removeItem('isGuest');
+        }
+        return session?.user;
+      } catch (error) {
+        console.error('Error refreshing session:', error);
+        throw error;
       }
-      return session?.user;
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
   useEffect(() => {
     // Verificar sesión de invitado al cargar
     const guestStatus = localStorage.getItem('isGuest') === 'true';
     setIsGuest(guestStatus);
 
-    // Obtener sesión activa
+    // Obtener sesión activa UNA SOLA VEZ
     const initializeAuth = async () => {
-      setIsLoading(true);
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        const { data: { session } } = await supabase.auth.getSession();
 
         setUser(session?.user ?? null);
-        setIsEmailVerified(session?.user?.email_confirmed_at !== null);
-        
+        setIsEmailVerified(!!session?.user?.email_confirmed_at);
         if (session?.user) {
           setIsGuest(false);
           localStorage.removeItem('isGuest');
@@ -83,30 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
+    // Escuchar cambios de autenticación (sin llamadas duplicadas)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Solo actualizar si hay un cambio real
-        if (session?.user?.id !== user?.id) {
-          setUser(session?.user ?? null);
-          setIsEmailVerified(session?.user?.email_confirmed_at !== null);
-          
-          if (session?.user) {
-            setIsGuest(false);
-            localStorage.removeItem('isGuest');
-            
-            // Forzar actualización después de eventos importantes
-            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-              const { data: { user: currentUser } } = await supabase.auth.getUser();
-              setUser(currentUser);
-              setIsEmailVerified(currentUser?.email_confirmed_at !== null);
-            }
-          }
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setIsEmailVerified(!!session?.user?.email_confirmed_at);
+        
+        if (session?.user) {
+          setIsGuest(false);
+          localStorage.removeItem('isGuest');
+        } else if (!session?.user && !guestStatus) {
+          // Usuario cerró sesión
+          setUser(null);
+          setIsGuest(false);
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [user?.id]);
+  }, []); // Solo ejecutar UNA VEZ al montar
 
   const signInAsGuest = () => {
     setIsGuest(true);
@@ -116,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -128,13 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const resendConfirmationEmail = async (email: string) => {
-    setIsLoading(true);
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
@@ -144,8 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
       if (error) throw error;
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Error resending email:', error);
+      throw error;
     }
   };
 
