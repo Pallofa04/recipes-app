@@ -4,19 +4,21 @@ import { ArrowLeft, ChefHat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import UploadImage from '../components/UploadImage';
 import { analyzeImage } from '../api/images';
-import { useAuth } from '../api/AuthContext'; // Añadir esta importación
+import { useAuth } from '../api/AuthContext';
+import i18n from '../i18n';
 
 const UploadImagePage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = useAuth(); // Añadir esto
+  const { user } = useAuth();
 
   const handleImageUpload = async (file: File, isGuestMode: boolean) => { 
     setIsAnalyzing(true);
     try {
-      const userId = isGuestMode ? 'guest' : user?.id; // Determinar user_id
-      const result = await analyzeImage(file, userId); // Pasar user_id
+      const userId = isGuestMode ? 'guest' : user?.id;
+      const currentLanguage = i18n.language;
+      const result = await analyzeImage(file, userId, currentLanguage);
       
       // Create a blob URL for the uploaded image to pass to results
       const imageUrl = URL.createObjectURL(file);
@@ -27,7 +29,7 @@ const UploadImagePage = () => {
           result: result,
           imageUrl: imageUrl,
           fileName: file.name,
-          isGuest: isGuestMode // Pasar si es guest
+          isGuest: isGuestMode
         } 
       });
     } catch (error: unknown) {

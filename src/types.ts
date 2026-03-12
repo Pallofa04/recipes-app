@@ -13,6 +13,8 @@ export interface DishIdentificationResponse {
   preparation: string[];
   cooking_time?: string;
   serving_suggestion?: string;
+  calories?: number;
+  servings?: number;
   similar_recipe_id?: string;
   success: boolean;
 }
@@ -23,6 +25,7 @@ export interface RecipeRequest {
   calories?: number;
   dietaryPreferences?: string;
   user_id: string;
+  language?: 'en' | 'es';
 }
 
 export interface RecipeResponse {
@@ -34,7 +37,7 @@ export interface RecipeResponse {
   calories: number;
   ingredients: string[] | IngredientInfo[];
   instructions: string[];
-  created_at: string;
+  created_at?: string;
 }
 
 export interface RecipeContent {

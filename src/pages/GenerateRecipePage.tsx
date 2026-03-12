@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChefHat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../api/AuthContext';
+import { useLanguage } from '../api/LanguageContext';
 import RecipeForm from '../components/RecipeForm';
 import { generateRecipe } from '../api';
 import { RecipeRequest } from '../types';
@@ -13,6 +14,7 @@ const GenerateRecipePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { language } = useLanguage();
 
   const handleGenerateRecipe = async (recipeData: Omit<RecipeRequest, 'user_id'>, isGuestMode: boolean) => { // Cambiar firma
     setIsGenerating(true);
@@ -34,7 +36,8 @@ const GenerateRecipePage = () => {
       // Generar la receta
       const recipe = await generateRecipe({
         ...recipeData,
-        user_id: userId // Usar el user_id determinado
+        user_id: userId,
+        language,
       });
       
       // Navegar a la página de resultados
@@ -45,13 +48,19 @@ const GenerateRecipePage = () => {
         } 
       });
       
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error generating recipe:', err);
-      
-      // Manejo seguro de errores
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : t('generateRecipe.genericError');
+
+      let errorMessage = t('generateRecipe.genericError');
+
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { detail?: string; error?: string } } };
+        errorMessage = axiosError.response?.data?.detail
+          || axiosError.response?.data?.error
+          || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       
       setError(errorMessage);
       

@@ -1,12 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.responses import JSONResponse
 import google.generativeai as genai
 import os, json, logging, io, re
 from PIL import Image, UnidentifiedImageError
 from typing import List, Optional, Dict, Any
+import asyncio
 from pydantic import BaseModel
 from supabase import create_client, Client
-import concurrent.futures
 
 router = APIRouter()
 
@@ -62,6 +62,59 @@ async def validate_image_file(file: UploadFile):
     except UnidentifiedImageError:
         raise HTTPException(400, "Unsupported image format")
 
+def _estimate_calories(dish_type: str, ingredient_count: int, dish_name: str = "") -> int:
+    """
+    Estimate calories based on dish type and ingredient count.
+    Returns reasonable estimates for 2 servings.
+    """
+    dish_type_lower = dish_type.lower()
+    
+    # Base calories by type
+    base_calories = {
+        'appetizer': 200,
+        'entrante': 200,
+        'starter': 200,
+        'main course': 500,
+        'plato principal': 500,
+        'main': 500,
+        'dessert': 350,
+        'postre': 350,
+        'salad': 200,
+        'ensalada': 200,
+        'soup': 250,
+        'sopa': 250,
+        'pasta': 600,
+        'rice': 550,
+        'arroz': 550,
+        'meat': 600,
+        'carne': 600,
+        'fish': 400,
+        'pescado': 400,
+        'chicken': 450,
+        'pollo': 450,
+        'vegetable': 250,
+        'vegetal': 250,
+    }
+    
+    # Find matching type
+    calories = 400  # default
+    for key, value in base_calories.items():
+        if key in dish_type_lower:
+            calories = value
+            break
+    
+    # Adjust based on ingredient count (more ingredients = more calories)
+    ingredient_adjustment = ingredient_count * 30
+    total = calories + ingredient_adjustment
+    
+    # Cap at reasonable values
+    if total > 1000:
+        total = 900
+    if total < 100:
+        total = 200
+    
+    return total
+
 def _translate_dish_to_language(dish_data: Dict[str, Any], language: str):
     """
     Translate identified dish to specified language (en or es).
@@ -106,9 +159,15 @@ def _translate_dish_to_language(dish_data: Dict[str, Any], language: str):
 # ENDPOINT
 # ----------------------------
 @router.post("/identify-dish", response_model=DishIdentificationResponse)
-async def identify_dish(image: UploadFile = File(...), user_id: Optional[str] = Form(None)):
+async def identify_dish(
+    image: UploadFile = File(...), 
+    user_id: Optional[str] = Form(None),
+    language: Optional[str] = Form("en"),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
     """
     Identify a dish from an image, save in Supabase only for registered users (with bilingual content).
+    Returns response in user's preferred language immediately.
     """
     try:
         if not os.getenv("GEMINI_API_KEY"):
@@ -116,39 +175,48 @@ async def identify_dish(image: UploadFile = File(...), user_id: Optional[str] = 
 
         pil_image = await validate_image_file(image)
 
-        # Prompt mejorado para forzar JSON puro
+        # Improved prompt to include calories estimation
         prompt = """Analyze this cooked dish image and respond with ONLY valid JSON (no markdown, no code blocks, no extra text).
+
+        Estimate the calories per serving based on typical recipes for this dish.
+        For the dish type, use categories like: appetizer, main course, dessert, salad, soup, pasta, rice, meat, fish, chicken, vegetable, etc.
 
         Return this exact structure:
         {
             "dish_name": "name of the dish",
-            "type": "appetizer/main course/dessert/etc",
+            "type": "appetizer/main course/dessert/salad/soup/pasta/rice/meat/fish/chicken/vegetable",
             "ingredients": [
-                {"name": "ingredient name", "state": "raw/cooked/chopped", "quantity": "approximate amount"}
+                {"name": "ingredient name", "state": "raw/cooked/chopped/diced", "quantity": "approximate amount"}
             ],
-            "origin": "country or region",
+            "origin": "country or region where this dish originates",
             "preparation": ["step 1", "step 2", "step 3"],
             "cooking_time": "X minutes",
-            "serving_suggestion": "how to serve it"
+            "serving_suggestion": "how to serve it and presentation tips",
+            "calories": estimated_calories_per_serving_as_number,
+            "servings": typical_number_of_servings_as_number
         }
         
-        IMPORTANT: Return ONLY the JSON object, nothing else."""
+        IMPORTANT NOTES:
+        - Return ONLY the JSON object, nothing else
+        - calories should be a number (e.g., 450)
+        - servings should be a number (e.g., 2)
+        - For calories, estimate realistically based on the dish type and visible ingredients
+        - If unsure, estimate based on typical restaurant portions of that dish type"""
 
         response = model.generate_content(
             [prompt, pil_image],
-            generation_config={"temperature": 0.3, "max_output_tokens": 1500}
+            generation_config={"temperature": 0.4, "max_output_tokens": 1500}
         )
 
         response_text = response.text.strip()
 
-        # Intenta extraer JSON (quitando markdown si existe)
+        # Try to extract JSON (removing markdown if present)
         if response_text.startswith("```"):
-            # Quita los bloques de código markdown
             response_text = re.sub(r"```(?:json)?\n?", "", response_text).strip()
         
         dish_data_en = extract_json(response_text)
 
-        # Validar que tenga los campos mínimos
+        # Validate minimum fields
         if "dish_name" not in dish_data_en:
             raise ValueError("Response missing 'dish_name'")
         if "ingredients" not in dish_data_en:
@@ -156,50 +224,38 @@ async def identify_dish(image: UploadFile = File(...), user_id: Optional[str] = 
         if "preparation" not in dish_data_en:
             dish_data_en["preparation"] = []
 
-        # Ensure servings and calories
-        servings = 2  # Default to 2 servings for photo dishes
-        if not dish_data_en.get("servings"):
-            dish_data_en["servings"] = servings
+        # Ensure calories and servings have reasonable values
+        if not dish_data_en.get("calories") or dish_data_en.get("calories") <= 0:
+            ingredient_count = len(dish_data_en.get("ingredients", []))
+            estimated_calories = _estimate_calories(
+                dish_data_en.get("type", "main course"),
+                ingredient_count,
+                dish_data_en.get("dish_name", "")
+            )
+            dish_data_en["calories"] = estimated_calories
+        
+        if not dish_data_en.get("servings") or dish_data_en.get("servings") <= 0:
+            dish_data_en["servings"] = 2  # Default to 2 servings
 
-        # Estimate calories if not provided
-        if not dish_data_en.get("calories"):
-            # Get calorie estimate from Gemini based on ingredients
-            calorie_prompt = f"""Estimate the total calories for this dish (for {servings} servings) based on these ingredients:
-            Dish: {dish_data_en.get('dish_name', 'unknown')}
-            Ingredients: {dish_data_en.get('ingredients', [])}
-            
-            Respond with ONLY a single number (calories). No text. Example: 450"""
-            
+        # Determine which language to return
+        preferred_language = language or "en"
+        
+        # Translate to Spanish if requested
+        dish_data_response = dish_data_en
+        if preferred_language == "es":
             try:
-                calorie_response = model.generate_content(calorie_prompt, generation_config={"temperature": 0.3, "max_output_tokens": 5})
-                
-                # Safely check if response has valid content
-                if calorie_response.candidates and len(calorie_response.candidates) > 0:
-                    candidate = calorie_response.candidates[0]
-                    if candidate.content and len(candidate.content.parts) > 0:
-                        calorie_text = candidate.content.parts[0].text.strip()
-                        # Extract number from response
-                        calorie_match = re.search(r'\d+', calorie_text)
-                        if calorie_match:
-                            estimated_calories = int(calorie_match.group())
-                            dish_data_en["calories"] = estimated_calories
-                        else:
-                            dish_data_en["calories"] = 400
-                    else:
-                        dish_data_en["calories"] = 400
-                else:
-                    dish_data_en["calories"] = 400
+                dish_data_response = _translate_dish_to_language(dish_data_en, "es")
+                # Keep calories from EN version
+                dish_data_response["calories"] = dish_data_en.get("calories", 400)
+                dish_data_response["servings"] = dish_data_en.get("servings", 2)
             except Exception as e:
-                logging.warning(f"Could not estimate calories from image: {str(e)}, using default")
-                dish_data_en["calories"] = 400
+                logging.warning(f"Translation failed, returning English: {e}")
+                dish_data_response = dish_data_en
 
-        # Translate to Spanish
-        dish_data_es = _translate_dish_to_language(dish_data_en, "es")
-
-        # Solo guardar en base de datos si es usuario registrado
+        # Save to Supabase in background if user is logged in
         recipe_id = None
         if user_id and user_id != "guest":
-            # Save into recipes with bilingual content
+            # Create insert data with both languages
             insert_data = {
                 "user_id": user_id,
                 "name": dish_data_en["dish_name"],
@@ -216,37 +272,84 @@ async def identify_dish(image: UploadFile = File(...), user_id: Optional[str] = 
                     "prep_time": dish_data_en.get("cooking_time", "unknown"),
                     "ingredients": dish_data_en.get("ingredients", []),
                     "instructions": dish_data_en.get("preparation", [])
-                },
-                "content_es": {
-                    "name": dish_data_es["dish_name"],
-                    "description": f"Identificado {dish_data_es['dish_name']} de una imagen",
-                    "prep_time": dish_data_es.get("cooking_time", "unknown"),
-                    "ingredients": dish_data_es.get("ingredients", []),
-                    "instructions": dish_data_es.get("preparation", [])
                 }
             }
-            recipe_insert = supabase.table("recipes").insert(insert_data).execute()
-            if recipe_insert.data:
-                recipe_id = recipe_insert.data[0]["id"]
-                
-                # Save in history
-                supabase.table("history").insert({
-                    "user_id": user_id,
-                    "recipe_id": recipe_id
-                }).execute()
+            
+            # If we have Spanish data, add it
+            if preferred_language == "es" and dish_data_response != dish_data_en:
+                insert_data["content_es"] = {
+                    "name": dish_data_response.get("dish_name", dish_data_en["dish_name"]),
+                    "description": f"Identificado {dish_data_response.get('dish_name', dish_data_en['dish_name'])} desde una imagen",
+                    "prep_time": dish_data_response.get("cooking_time", dish_data_en.get("cooking_time", "unknown")),
+                    "ingredients": dish_data_response.get("ingredients", dish_data_en.get("ingredients", [])),
+                    "instructions": dish_data_response.get("preparation", dish_data_en.get("preparation", []))
+                }
+
+            try:
+                recipe_insert = supabase.table("recipes").insert(insert_data).execute()
+                if recipe_insert.data:
+                    recipe_id = recipe_insert.data[0]["id"]
+                    
+                    # Save in history
+                    supabase.table("history").insert({
+                        "user_id": user_id,
+                        "recipe_id": recipe_id
+                    }).execute()
+                    
+                    # Background task: translate to missing language if needed
+                    if preferred_language == "en" and not insert_data.get("content_es"):
+                        background_tasks.add_task(
+                            _add_missing_translation,
+                            recipe_id,
+                            dish_data_en,
+                            "es",
+                            user_id
+                        )
+                    elif preferred_language == "es" and not insert_data.get("content_es"):
+                        background_tasks.add_task(
+                            _add_missing_translation,
+                            recipe_id,
+                            dish_data_en,
+                            "en",
+                            user_id
+                        )
+            except Exception as e:
+                logging.error(f"Failed to save recipe: {e}")
 
         return {
             "id": recipe_id or f"guest_{hash(pil_image.tobytes())}",
-            "dish_name": dish_data_en["dish_name"],
-            "type": dish_data_en.get("type", "main course"),
-            "ingredients": dish_data_en.get("ingredients", []),
-            "origin": dish_data_en.get("origin", "unknown"),
-            "preparation": dish_data_en.get("preparation", []),
-            "cooking_time": dish_data_en.get("cooking_time"),
-            "serving_suggestion": dish_data_en.get("serving_suggestion"),
+            "dish_name": dish_data_response.get("dish_name", dish_data_en["dish_name"]),
+            "type": dish_data_response.get("type", dish_data_en.get("type", "main course")),
+            "ingredients": dish_data_response.get("ingredients", dish_data_en.get("ingredients", [])),
+            "origin": dish_data_response.get("origin", dish_data_en.get("origin", "unknown")),
+            "preparation": dish_data_response.get("preparation", dish_data_en.get("preparation", [])),
+            "cooking_time": dish_data_response.get("cooking_time", dish_data_en.get("cooking_time")),
+            "serving_suggestion": dish_data_response.get("serving_suggestion", dish_data_en.get("serving_suggestion")),
+            "calories": dish_data_en.get("calories", 400),
+            "servings": dish_data_en.get("servings", 2),
             "success": True
         }
 
     except Exception as e:
         logging.error(f"Error: {e}", exc_info=True)
         raise HTTPException(500, f"Error analyzing the dish: {str(e)}")
+
+
+async def _add_missing_translation(recipe_id: str, dish_data_en: Dict[str, Any], target_lang: str, user_id: str):
+    """Background task to add missing language translation to a recipe."""
+    try:
+        translated_data = _translate_dish_to_language(dish_data_en, target_lang)
+        
+        content_key = "content_es" if target_lang == "es" else "content_en"
+        content_value = {
+            "name": translated_data.get("dish_name", dish_data_en["dish_name"]),
+            "description": f"{'Identificado' if target_lang == 'es' else 'Identified'} {translated_data.get('dish_name', dish_data_en['dish_name'])} {'desde una imagen' if target_lang == 'es' else 'from an image'}",
+            "prep_time": translated_data.get("cooking_time", dish_data_en.get("cooking_time", "unknown")),
+            "ingredients": translated_data.get("ingredients", dish_data_en.get("ingredients", [])),
+            "instructions": translated_data.get("preparation", dish_data_en.get("preparation", []))
+        }
+        
+        supabase.table("recipes").update({content_key: content_value}).eq("id", recipe_id).execute()
+        logging.info(f"Added {target_lang} translation to recipe {recipe_id}")
+    except Exception as e:
+        logging.error(f"Failed to add translation to recipe {recipe_id}: {e}")

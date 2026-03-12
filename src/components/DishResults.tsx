@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChefHat, Clock, MapPin, Users, Utensils, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { ChefHat, Clock, MapPin, Users, Utensils, ChevronDown, ChevronUp, RotateCcw, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface IngredientInfo {
@@ -153,6 +153,22 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
                     <Clock className="w-4 h-4 text-primary-600" />
                     <span className="text-gray-600">{t('dishResults.time')}</span>
                     <span className="font-medium">{result.cooking_time}</span>
+                  </div>
+                )}
+
+                {result.calories !== undefined && (
+                  <div className="flex items-center gap-2 text-body-sm">
+                    <Flame className="w-4 h-4 text-orange-600" />
+                    <span className="text-gray-600">{t('recipeDisplay.calories')}</span>
+                    <span className="font-medium">{result.calories} kcal</span>
+                  </div>
+                )}
+
+                {result.servings !== undefined && (
+                  <div className="flex items-center gap-2 text-body-sm">
+                    <Users className="w-4 h-4 text-green-600" />
+                    <span className="text-gray-600">{t('recipeDisplay.servings')}</span>
+                    <span className="font-medium">{result.servings}</span>
                   </div>
                 )}
               </div>
