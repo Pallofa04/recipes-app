@@ -164,26 +164,33 @@ async def identify_dish(image: UploadFile = File(...), user_id: Optional[str] = 
         # Estimate calories if not provided
         if not dish_data_en.get("calories"):
             # Get calorie estimate from Gemini based on ingredients
-            calorie_prompt = f"""Estimate the total calories for this dish (for {servings} servings) based on these ingredients and description:
+            calorie_prompt = f"""Estimate the total calories for this dish (for {servings} servings) based on these ingredients:
             Dish: {dish_data_en.get('dish_name', 'unknown')}
             Ingredients: {dish_data_en.get('ingredients', [])}
-            Description: Identified from a photo
             
-            Respond with ONLY a single number (estimated calories per serving for {servings} servings). No text, no explanation. For example: 450"""
-            
-            calorie_response = model.generate_content(calorie_prompt, generation_config={"temperature": 0.3, "max_output_tokens": 10})
-            calorie_text = calorie_response.text.strip()
+            Respond with ONLY a single number (calories). No text. Example: 450"""
             
             try:
-                # Extract number from response
-                calorie_match = re.search(r'\d+', calorie_text)
-                if calorie_match:
-                    estimated_calories = int(calorie_match.group())
-                    dish_data_en["calories"] = estimated_calories
+                calorie_response = model.generate_content(calorie_prompt, generation_config={"temperature": 0.3, "max_output_tokens": 5})
+                
+                # Safely check if response has valid content
+                if calorie_response.candidates and len(calorie_response.candidates) > 0:
+                    candidate = calorie_response.candidates[0]
+                    if candidate.content and len(candidate.content.parts) > 0:
+                        calorie_text = candidate.content.parts[0].text.strip()
+                        # Extract number from response
+                        calorie_match = re.search(r'\d+', calorie_text)
+                        if calorie_match:
+                            estimated_calories = int(calorie_match.group())
+                            dish_data_en["calories"] = estimated_calories
+                        else:
+                            dish_data_en["calories"] = 400
+                    else:
+                        dish_data_en["calories"] = 400
                 else:
-                    # Fallback: reasonable estimate based on typical dishes
                     dish_data_en["calories"] = 400
-            except:
+            except Exception as e:
+                logging.warning(f"Could not estimate calories from image: {str(e)}, using default")
                 dish_data_en["calories"] = 400
 
         # Translate to Spanish
