@@ -1,7 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChefHat } from 'lucide-react';
+import { ArrowLeft, ChefHat, RotateCcw, Edit3 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DishResults from '../components/DishResults';
+import FavoriteToggle from '../components/FavoriteToggle';
 import { DishIdentificationResponse } from '../types';
 
 interface LocationState {
@@ -13,6 +15,7 @@ interface LocationState {
 const DishResultsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const state = location.state as LocationState;
 
   // Redirect if no data is available
@@ -30,12 +33,8 @@ const DishResultsPage = () => {
     navigate('/upload-image');
   };
 
-  const handleBackToHome = () => {
-    // Clean up the blob URL
-    if (state?.imageUrl && state.imageUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(state.imageUrl);
-    }
-    navigate('/');
+  const handleGenerateWithIngredients = () => {
+    navigate('/generate-recipe');
   };
 
   // Don't render if there's no state
@@ -49,11 +48,11 @@ const DishResultsPage = () => {
       <header className="container py-6">
         <div className="flex items-center justify-between">
           <button
-            onClick={handleBackToHome}
+            onClick={() => navigate('/home')}
             className="btn btn-ghost"
           >
             <ArrowLeft className="w-5 h-5" />
-            Volver al inicio
+            {t('common.backHome')}
           </button>
           
           <div className="flex items-center gap-3">
@@ -73,6 +72,31 @@ const DishResultsPage = () => {
             imageUrl={state.imageUrl}
             onReset={handleReset}
           />
+          
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleReset}
+                className="btn btn-primary"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t('dishResultsPage.uploadAnother')}
+              </button>
+              
+              <button
+                onClick={handleGenerateWithIngredients}
+                className="btn btn-outline"
+              >
+                <Edit3 className="w-4 h-4" />
+                {t('dishResultsPage.tryIngredients')}
+              </button>
+            </div>
+            
+            {state.result?.id && (
+              <FavoriteToggle recipeId={state.result.id} size="lg" />
+            )}
+          </div>
         </div>
       </main>
     </div>
