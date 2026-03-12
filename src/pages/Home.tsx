@@ -1,42 +1,44 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Camera, PenTool, ChefHat, Sparkles, Clock, Users, Star, ImageIcon, Utensils } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const features = [
     {
       icon: <ChefHat className="w-6 h-6" />,
-      title: "Recetas Profesionales",
-      description: "Generadas por IA especializada en cocina"
+      title: t('home.feature1Title'),
+      description: t('home.feature1Desc')
     },
     {
       icon: <Clock className="w-6 h-6" />,
-      title: "Rápido y Fácil",
-      description: "Obtén tu receta en segundos"
+      title: t('home.feature2Title'),
+      description: t('home.feature2Desc')
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: "Para Todos",
-      description: "Adaptado a tus gustos y necesidades"
+      title: t('home.feature3Title'),
+      description: t('home.feature3Desc')
     }
   ];
 
   const howItWorks = [
     {
       icon: <ImageIcon className="w-8 h-8" />,
-      title: "1. Sube tu imagen",
-      description: "Captura o sube una foto de tus ingredientes"
+      title: t('home.step1Title'),
+      description: t('home.step1Desc')
     },
     {
       icon: <Sparkles className="w-8 h-8" />,
-      title: "2. IA identifica",
-      description: "Nuestra IA reconoce automáticamente los ingredientes"
+      title: t('home.step2Title'),
+      description: t('home.step2Desc')
     },
     {
       icon: <Utensils className="w-8 h-8" />,
-      title: "3. Recibe tu receta",
-      description: "Obtén una receta personalizada y detallada"
+      title: t('home.step3Title'),
+      description: t('home.step3Desc')
     }
   ];
 
@@ -50,7 +52,7 @@ const Home = () => {
           </h1>
         </div>
         <p className="text-center text-gray-600 text-body-lg">
-          Generador de Recetas Profesionales con IA
+          {t('home.subtitle')}
         </p>
       </header>
 
@@ -58,19 +60,18 @@ const Home = () => {
       <section className="container py-16">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-display-1 mb-6 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            Transforma tus ingredientes en
+            {t('home.heroTitle')}
             <span className="block bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-              recetas extraordinarias
+              {t('home.heroAccent')}
             </span>
           </h2>
           <p className="text-body-lg text-gray-600 max-w-2xl mx-auto mb-8">
-            Descubre el poder de la inteligencia artificial para crear recetas únicas y deliciosas 
-            a partir de tus ingredientes favoritos o simplemente una foto.
+            {t('home.heroDescription')}
           </p>
           
           <div className="flex items-center justify-center gap-2 text-secondary-600 mb-12">
             <Sparkles className="w-5 h-5" />
-            <span className="text-caption font-medium">Potenciado por IA Avanzada</span>
+            <span className="text-caption font-medium">{t('home.poweredBy')}</span>
             <Star className="w-4 h-4 fill-current" />
           </div>
         </div>
@@ -78,58 +79,62 @@ const Home = () => {
         {/* Main Options */}
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
           {/* Upload Image Option */}
-          <div className="card card-interactive group animate-fade-in cursor-pointer animate-delay-100ms">
+          <button 
+            className="card card-interactive group animate-fade-in cursor-pointer animate-delay-100ms"
+            onClick={() => navigate('/upload-image')}
+          >
             <div className="card-body text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Camera className="w-10 h-10 text-primary-600" />
               </div>
-              <h3 className="text-h2 mb-4 text-gray-800">Subir Imagen del Plato</h3>
+              <h3 className="text-h2 mb-4 text-gray-800">{t('home.imageCardTitle')}</h3>
               <p className="text-body text-gray-600 mb-6">
-                Captura o sube una foto de tu plato y deja que la IA identifique 
-                automáticamente cómo se cocina.
+                {t('home.imageCardDescription')}
               </p>
               <div className="flex items-center justify-center gap-2 text-primary-600 font-medium">
-                <span>Comenzar con imagen</span>
+                <span>{t('home.imageCardCta')}</span>
                 <div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform">
                   <span className="text-white text-sm">→</span>
                 </div>
               </div>
               <div className="mt-4 text-xs text-gray-500">
-                📱 Desde móvil o 💻 ordenador
+                {t('home.imageCardMeta')}
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Manual Input Option */}
-          <div className="card card-interactive group animate-fade-in cursor-pointer animate-delay-200ms">
+          <button 
+            className="card card-interactive group animate-fade-in cursor-pointer animate-delay-200ms"
+            onClick={() => navigate('/generate-recipe')}
+          >
             <div className="card-body text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-secondary-100 to-secondary-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <PenTool className="w-10 h-10 text-secondary-600" />
               </div>
-              <h3 className="text-h2 mb-4 text-gray-800">Escribir Ingredientes</h3>
+              <h3 className="text-h2 mb-4 text-gray-800">{t('home.manualCardTitle')}</h3>
               <p className="text-body text-gray-600 mb-6">
-                Escribe manualmente los ingredientes que tienes disponibles y 
-                personaliza tu receta con preferencias específicas.
+                {t('home.manualCardDescription')}
               </p>
               <div className="flex items-center justify-center gap-2 text-secondary-600 font-medium">
-                <span>Escribir ingredientes</span>
+                <span>{t('home.manualCardCta')}</span>
                 <div className="w-6 h-6 bg-secondary-600 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform">
                   <span className="text-white text-sm">→</span>
                 </div>
               </div>
               <div className="mt-4 text-xs text-gray-500">
-                ⚙️ Personalización completa
+                {t('home.manualCardMeta')}
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* How It Works Section */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h3 className="text-h1 mb-4 text-gray-800">¿Cómo funciona?</h3>
+            <h3 className="text-h1 mb-4 text-gray-800">{t('home.howItWorks')}</h3>
             <p className="text-body text-gray-600 max-w-xl mx-auto">
-              En solo 3 simples pasos tendrás tu receta personalizada
+              {t('home.howItWorksDesc')}
             </p>
           </div>
           
@@ -153,7 +158,7 @@ const Home = () => {
 
         {/* Features Section */}
         <div className="text-center mb-12">
-          <h3 className="text-h2 mb-8 text-gray-800">¿Por qué elegir RecipeGen?</h3>
+          <h3 className="text-h2 mb-8 text-gray-800">{t('home.whyChoose')}</h3>
           <div className="grid md:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <div 
@@ -175,12 +180,12 @@ const Home = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center animate-fade-in animate-delay-900ms">
+        <div className="text-center animate-fade-in animate-delay-900ms" id="cta-section">
           <div className="card bg-gradient-to-br from-primary-50 to-secondary-50 border-primary-200">
             <div className="card-body text-center">
-              <h3 className="text-h2 mb-4 text-gray-800">¿Listo para empezar?</h3>
+              <h3 className="text-h2 mb-4 text-gray-800">{t('home.ctaTitle')}</h3>
               <p className="text-body text-gray-600 mb-6 max-w-lg mx-auto">
-                Únete a miles de usuarios que ya están creando recetas increíbles con RecipeGen
+                {t('home.ctaDesc')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
@@ -188,14 +193,14 @@ const Home = () => {
                   className="btn btn-primary px-8"
                 >
                   <Camera className="w-4 h-4" />
-                  Subir Imagen
+                  {t('home.uploadImage')}
                 </button>
                 <button
                   onClick={() => navigate('/generate-recipe')}
                   className="btn btn-outline px-8"
                 >
                   <PenTool className="w-4 h-4" />
-                  Escribir Ingredientes
+                  {t('home.writeIngredients')}
                 </button>
               </div>
             </div>
