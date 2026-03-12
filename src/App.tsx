@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './api/AuthContext';
+import { LanguageProvider } from './api/LanguageContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicRoute } from './components/PublicRoute';
 
@@ -9,6 +10,7 @@ import Home from './pages/Home';
 import UploadImagePage from './pages/UploadImagePage';
 import GenerateRecipePage from './pages/GenerateRecipePage';
 import RecipeResultPage from './pages/RecipeResultPage';
+import RecipeDetailPage from './pages/RecipeDetailPage';
 import DishResultsPage from './pages/DishResultsPage';
 
 // Components
@@ -23,9 +25,10 @@ import Favorites from './components/Favorites';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
+      <LanguageProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Routes>
             {/* Ruta de bienvenida - sin header - redirige si ya está logueado */}
             <Route 
               path="/" 
@@ -105,6 +108,14 @@ function App() {
                         </ProtectedRoute>
                       } 
                     />
+                    <Route 
+                      path="/recipe/:id" 
+                      element={
+                        <ProtectedRoute requireAuth={true}>
+                          <RecipeDetailPage />
+                        </ProtectedRoute>
+                      } 
+                    />
 
                     {/* Rutas que requieren usuario real (no guest) */}
                     <Route 
@@ -138,9 +149,10 @@ function App() {
                 </>
               }
             />
-          </Routes>
-        </div>
-      </Router>
+            </Routes>
+          </div>
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 }
