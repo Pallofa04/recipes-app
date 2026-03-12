@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from supabase import create_client, Client
 import os
 
@@ -12,7 +12,22 @@ supabase: Client = create_client(
 @router.get("/{user_id}")
 async def get_user_history(user_id: str):
     """
-    Get full history (recipes joined with history).
+    Get user's recipe history.
     """
-    resp = supabase.rpc("get_user_history", {"uid": user_id}).execute()
-    return resp.data
+    try:
+        # Obtener historial con join a recipes
+        resp = supabase.table("history") \
+            .select("*, recipes(*)") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc=True) \
+            .execute()
+        
+        # Transformar datos para devolver solo las recetas
+        recipes = []
+        for item in resp.data:
+            if item.get("recipes"):
+                recipes.append(item["recipes"])
+        
+        return recipes
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
