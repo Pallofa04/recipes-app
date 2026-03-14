@@ -103,7 +103,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
           <div className="w-16 h-16 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Camera className="w-8 h-8 text-primary-600" />
           </div>
-          <h1 className="text-h1 mb-2 text-gray-800">Identificar Plato Cocido</h1>
+          <h1 className="text-h1 mb-2 text-gray-800">{t('uploadImage.title')}</h1>
           <p className="text-body text-gray-600">
             {t('uploadImage.subtitle')}
           </p>
@@ -131,7 +131,7 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileInput}
                 className="hidden"
-                title="Seleccionar archivo de imagen"
+                title={t('uploadImage.selectFile')}
               />
 
               <div className="mb-6">
@@ -242,7 +242,6 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
       <div className="mt-8 animate-fade-in animate-delay-200ms">
         <div className="card">
           <div className="card-body">
-            <h3 className="text-h3 mb-4 text-gray-800">💡 Consejos para mejores resultados</h3>
             <h3 className="text-h3 mb-4 text-gray-800">💡 {t('uploadImage.tipsTitle')}</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex gap-3">

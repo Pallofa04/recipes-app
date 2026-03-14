@@ -1,14 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, BackgroundTasks
-from fastapi.responses import JSONResponse
 import google.generativeai as genai
 import os, json, logging, io, re
 from PIL import Image, UnidentifiedImageError
 from typing import List, Optional, Dict, Any
-import asyncio
 from pydantic import BaseModel
 from supabase import create_client, Client
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Gemini config
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -37,16 +36,91 @@ class DishIdentificationResponse(BaseModel):
     preparation: List[str]
     cooking_time: Optional[str] = None
     serving_suggestion: Optional[str] = None
+    calories: Optional[int] = None
+    servings: Optional[int] = None
     success: bool
 
 # ----------------------------
 # HELPERS
 # ----------------------------
-def extract_json(text: str) -> Dict[str, Any]:
-    json_match = re.search(r"\{[\s\S]*\}", text)
-    if not json_match:
+def _extract_response_text(response: Any) -> str:
+    if hasattr(response, "text") and response.text:
+        return response.text.strip()
+
+    candidates = getattr(response, "candidates", None) or []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        parts = getattr(content, "parts", None) or []
+        text_parts = [getattr(part, "text", "") for part in parts if getattr(part, "text", "")]
+        if text_parts:
+            return "".join(text_parts).strip()
+
+    raise ValueError("Model response did not include text content")
+
+
+def _extract_json_slice(text: str) -> str:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"```(?:json)?\n?", "", cleaned).strip()
+        cleaned = cleaned.removesuffix("```").strip()
+
+    start = cleaned.find("{")
+    end = cleaned.rfind("}") + 1
+    if start == -1 or end <= start:
         raise ValueError("No valid JSON found in response")
-    return json.loads(json_match.group(0))
+
+    return cleaned[start:end]
+
+
+def _repair_json_with_model(malformed_json: str) -> Dict[str, Any]:
+    repair_prompt = f"""
+    Fix this malformed JSON and return ONLY valid JSON.
+    Preserve the same keys and values whenever possible.
+
+    Malformed JSON:
+    {malformed_json}
+    """
+
+    repaired_response = model.generate_content(
+        [repair_prompt],
+        generation_config={
+            "temperature": 0,
+            "max_output_tokens": 1500,
+            "response_mime_type": "application/json",
+        },
+    )
+    repaired_text = _extract_response_text(repaired_response)
+    repaired_json = _extract_json_slice(repaired_text)
+    return json.loads(repaired_json)
+
+
+def extract_json(text: str) -> Dict[str, Any]:
+    json_text = _extract_json_slice(text)
+    try:
+        return json.loads(json_text)
+    except json.JSONDecodeError as exc:
+        context_start = max(0, exc.pos - 80)
+        context_end = min(len(json_text), exc.pos + 80)
+        error_context = json_text[context_start:context_end]
+        logger.warning("Malformed JSON from Gemini near position %s: %s", exc.pos, error_context)
+
+        try:
+            logger.info("Attempting to repair malformed Gemini JSON")
+            return _repair_json_with_model(json_text)
+        except Exception as repair_exc:
+            raise ValueError(f"Failed to parse JSON response: {exc}. Repair failed: {repair_exc}") from repair_exc
+
+
+def _generate_structured_json(contents: List[Any], temperature: float = 0.3, max_output_tokens: int = 1500) -> Dict[str, Any]:
+    response = model.generate_content(
+        contents,
+        generation_config={
+            "temperature": temperature,
+            "max_output_tokens": max_output_tokens,
+            "response_mime_type": "application/json",
+        },
+    )
+    return extract_json(_extract_response_text(response))
 
 async def validate_image_file(file: UploadFile):
     if not file.content_type.startswith("image/"):
@@ -145,15 +219,7 @@ def _translate_dish_to_language(dish_data: Dict[str, Any], language: str):
     
     Translate ONLY content, preserve structure and null values."""
     
-    response = model.generate_content([prompt])
-    response_text = response.text.strip()
-    
-    if response_text.startswith("```"):
-        response_text = re.sub(r"```(?:json)?\n?", "", response_text).strip()
-    
-    translated_data = extract_json(response_text)
-    
-    return translated_data
+    return _generate_structured_json([prompt], temperature=0.1, max_output_tokens=1500)
 
 # ----------------------------
 # ENDPOINT
@@ -163,7 +229,7 @@ async def identify_dish(
     image: UploadFile = File(...), 
     user_id: Optional[str] = Form(None),
     language: Optional[str] = Form("en"),
-    background_tasks: BackgroundTasks = BackgroundTasks()
+    background_tasks: BackgroundTasks = None
 ):
     """
     Identify a dish from an image, save in Supabase only for registered users (with bilingual content).
@@ -203,18 +269,7 @@ async def identify_dish(
         - For calories, estimate realistically based on the dish type and visible ingredients
         - If unsure, estimate based on typical restaurant portions of that dish type"""
 
-        response = model.generate_content(
-            [prompt, pil_image],
-            generation_config={"temperature": 0.4, "max_output_tokens": 1500}
-        )
-
-        response_text = response.text.strip()
-
-        # Try to extract JSON (removing markdown if present)
-        if response_text.startswith("```"):
-            response_text = re.sub(r"```(?:json)?\n?", "", response_text).strip()
-        
-        dish_data_en = extract_json(response_text)
+        dish_data_en = _generate_structured_json([prompt, pil_image], temperature=0.2, max_output_tokens=1500)
 
         # Validate minimum fields
         if "dish_name" not in dish_data_en:
@@ -298,21 +353,23 @@ async def identify_dish(
                     
                     # Background task: translate to missing language if needed
                     if preferred_language == "en" and not insert_data.get("content_es"):
-                        background_tasks.add_task(
-                            _add_missing_translation,
-                            recipe_id,
-                            dish_data_en,
-                            "es",
-                            user_id
-                        )
+                        if background_tasks:
+                            background_tasks.add_task(
+                                _add_missing_translation,
+                                recipe_id,
+                                dish_data_en,
+                                "es",
+                                user_id
+                            )
                     elif preferred_language == "es" and not insert_data.get("content_es"):
-                        background_tasks.add_task(
-                            _add_missing_translation,
-                            recipe_id,
-                            dish_data_en,
-                            "en",
-                            user_id
-                        )
+                        if background_tasks:
+                            background_tasks.add_task(
+                                _add_missing_translation,
+                                recipe_id,
+                                dish_data_en,
+                                "en",
+                                user_id
+                            )
             except Exception as e:
                 logging.error(f"Failed to save recipe: {e}")
 
