@@ -16,9 +16,8 @@ export default function Profile() {
     setIsLoading(true);
     try {
       await signOut();
-      navigate('/'); // Redirigir a welcome page después del logout
-    } catch (error) {
-      console.error('Error signing out:', error);
+      navigate('/');
+    } catch {
       alert(t('profile.logoutError'));
     } finally {
       setIsLoading(false);
@@ -28,18 +27,16 @@ export default function Profile() {
   const handleLanguageChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     try {
       await setLanguagePreference(event.target.value as 'en' | 'es');
-    } catch (error) {
-      console.error('Error updating language:', error);
+    } catch {
       alert(t('profile.languageError'));
     }
   };
 
-  // Si es guest o no hay usuario, no mostrar perfil
   if (!user || isGuest) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold mb-4">Acceso Restringido</h2>
+          <h2 className="text-xl font-bold mb-4">{t('profile.restricted')}</h2>
           <p className="text-gray-600 mb-4">
             {t('profile.restrictedDesc')}
           </p>

@@ -1,12 +1,36 @@
-# ──────────── Frontend (React/Vue/etc) ────────────
-dist/              
-dist-ssr/           
+# Dependencies
 node_modules/
 
-# ──────────── Backend (Python) ────────────
-__pycache__/
-venv/
+# Build artifacts
+dist/
+dist-ssr/
+build/
 
-# ──────────── Datos y Secrets ────────────
-*.env               
-credentials.json   
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+
+# Runtime / uploads
+backend/uploads/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*.log

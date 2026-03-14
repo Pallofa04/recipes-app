@@ -10,8 +10,7 @@ export const checkIfFavorite = async (recipeId: string, userId: string): Promise
   try {
     const favorites = await getFavorites(userId);
     return favorites.some(recipe => recipe.id === recipeId);
-  } catch (err) {
-    console.error('Error checking favorite status:', err);
+  } catch {
     return false;
   }
 };

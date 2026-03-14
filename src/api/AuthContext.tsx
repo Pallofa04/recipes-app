@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-  // Función para refrescar la sesión
   const refreshSession = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -46,17 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return session?.user;
       } catch (error) {
-        console.error('Error refreshing session:', error);
         throw error;
       }
     };
 
   useEffect(() => {
-    // Verificar sesión de invitado al cargar
     const guestStatus = localStorage.getItem('isGuest') === 'true';
     setIsGuest(guestStatus);
 
-    // Obtener sesión activa UNA SOLA VEZ
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -67,8 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsGuest(false);
           localStorage.removeItem('isGuest');
         }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
+      } catch {
+        setUser(null);
+        setIsEmailVerified(false);
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    // Escuchar cambios de autenticación (sin llamadas duplicadas)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
@@ -86,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsGuest(false);
           localStorage.removeItem('isGuest');
         } else if (!session?.user && !guestStatus) {
-          // Usuario cerró sesión
           setUser(null);
           setIsGuest(false);
         }
@@ -94,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, []); // Solo ejecutar UNA VEZ al montar
+  }, []);
 
   const signInAsGuest = () => {
     setIsGuest(true);
@@ -113,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsEmailVerified(false);
       localStorage.removeItem('isGuest');
     } catch (error) {
-      console.error('Error signing out:', error);
       throw error;
     }
   };
@@ -129,7 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error('Error resending email:', error);
       throw error;
     }
   };

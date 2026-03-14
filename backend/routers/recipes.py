@@ -8,9 +8,6 @@ import re
 from google.api_core.exceptions import ResourceExhausted
 
 router = APIRouter()
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Configure Gemini AI
@@ -79,8 +76,6 @@ def _generate_recipe_for_language(ingredients: List[str], servings: int, calorie
     response = model.generate_content([prompt])
     response_text = response.text.strip()
     
-    logger.debug(f"Gemini response for {language}: {response_text[:200]}...")
-
     # Remove markdown code blocks if present
     if response_text.startswith("```"):
         response_text = re.sub(r"```(?:json)?\n?", "", response_text).strip()
@@ -94,7 +89,6 @@ def _generate_recipe_for_language(ingredients: List[str], servings: int, calorie
         
         json_str = response_text[start:end]
         recipe_data = json.loads(json_str)
-        logger.debug(f"Parsed recipe data for {language}: {list(recipe_data.keys())}")
         return recipe_data
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error for {language}: {e}")
@@ -126,7 +120,6 @@ def _normalize_recipe(recipe_data: Dict[str, Any], fallback_servings: int) -> Tu
             parsed_calories = int(match.group())
 
     recipe_data["calories"] = parsed_calories
-    logger.debug(f"Normalized calories: {parsed_calories} from {calories_value}")
     return recipe_data, parsed_calories
 
 
@@ -216,8 +209,6 @@ async def generate_recipe(request: RecipeRequest, background_tasks: BackgroundTa
         )
         primary_data, parsed_calories = _normalize_recipe(primary_data, request.servings)
 
-        logger.debug(f"Primary recipe ({preferred_language}): {primary_data}")
-
         recipe_id = None
         if request.user_id and request.user_id != "guest":
             content_key = f"content_{preferred_language}"
@@ -234,7 +225,6 @@ async def generate_recipe(request: RecipeRequest, background_tasks: BackgroundTa
                 content_key: _build_content_payload(primary_data),
             }
             
-            logger.debug(f"Saving recipe to Supabase: {insert_data['name']}")
             recipe_insert = supabase.table("recipes").insert(insert_data).execute()
             if recipe_insert.data:
                 recipe_id = recipe_insert.data[0]["id"]
@@ -278,7 +268,7 @@ async def generate_recipe(request: RecipeRequest, background_tasks: BackgroundTa
         raise
     except Exception as e:
         logger.error(f"Error generating recipe: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error generating recipe: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unexpected error while generating recipe")
 
 @router.get("/{recipe_id}")
 async def get_recipe(recipe_id: str):
@@ -292,5 +282,6 @@ async def get_recipe(recipe_id: str):
         return resp.data[0]
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching recipe: {str(e)}")
+    except Exception:
+        logger.exception("Error fetching recipe")
+        raise HTTPException(status_code=500, detail="Unable to fetch recipe at this time")

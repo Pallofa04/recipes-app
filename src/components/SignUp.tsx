@@ -46,8 +46,8 @@ export default function SignUpForm() {
       }
 
       setEmailSent(true);
-    } catch (err: any) {
-      setError(err.message || t('signup.signupError'));
+    } catch {
+      setError(t('signup.signupError'));
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +58,8 @@ export default function SignUpForm() {
     try {
       await resendConfirmationEmail(email);
       alert(t('signup.resent'));
-    } catch (err: any) {
-      setError(err.message || t('signup.resendError'));
+    } catch {
+      setError(t('signup.resendError'));
     } finally {
       setIsLoading(false);
     }

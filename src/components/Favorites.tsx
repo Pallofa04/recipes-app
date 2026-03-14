@@ -25,9 +25,8 @@ const Favorites = () => {
     try {
       const data = await getFavorites(user.id);
       setFavorites(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching favorites:', err);
+    } catch {
+      setError(t('common.error'));
     } finally {
       setLoading(false);
     }

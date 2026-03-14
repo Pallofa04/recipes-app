@@ -43,8 +43,8 @@ const FavoriteToggle = ({
       try {
         const status = await checkIfFavorite(recipeId, user.id);
         setIsFavorite(status);
-      } catch (err) {
-        console.error('Error checking favorite status:', err);
+      } catch {
+        setIsFavorite(false);
       } finally {
         setChecking(false);
       }
@@ -80,8 +80,7 @@ const FavoriteToggle = ({
         setIsFavorite(true);
         onToggle?.(true);
       }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
+    } catch {
       alert(t('favoriteToggle.updateError'));
     } finally {
       setLoading(false);

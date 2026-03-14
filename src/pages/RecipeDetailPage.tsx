@@ -27,8 +27,7 @@ const RecipeDetailPage = () => {
       try {
         const data = await getRecipe(id);
         setRecipe(data);
-      } catch (err) {
-        console.error('Error fetching recipe:', err);
+      } catch {
         setError(t('recipeDetail.loadError'));
       } finally {
         setLoading(false);

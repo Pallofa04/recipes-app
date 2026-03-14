@@ -1,147 +1,108 @@
-# AI Recipe Generator
+# RecipeGen
 
-A full-stack web application that uses Google's Gemini Pro Vision to analyze ingredient photos and generate personalized recipes.
+Full-stack AI recipe app with bilingual UX (English/Spanish), image-based dish analysis, and ingredient-based recipe generation.
 
 ## Features
 
-- **Image Analysis**: Upload photos of ingredients and get AI-powered identification
-- **Recipe Generation**: Create custom recipes based on detected ingredients
-- **Flexible Constraints**: Set calorie limits, serving sizes, and dietary preferences
-- **Modern UI**: Clean, responsive design with Tailwind CSS
-- **Real-time Updates**: Live feedback during image analysis and recipe generation
+- AI dish identification from uploaded image
+- AI recipe generation from ingredient list
+- Bilingual content flow (`en` / `es`) with user language preference
+- Supabase auth, favorites, and recipe history
+- Guest mode and authenticated mode
 
 ## Tech Stack
 
 ### Frontend
-- React 18 with functional components and hooks
-- Tailwind CSS for styling
-- Axios for API communication
-- Lucide React for icons
+- React 18 + TypeScript + Vite
+- Tailwind CSS
+- Axios
+- i18next / react-i18next
+- Supabase JS client
 
 ### Backend
-- Node.js with Express
-- Google Generative AI (Gemini Pro Vision)
-- Multer for file uploads
-- CORS for cross-origin requests
+- FastAPI (Python)
+- Google Gemini (`gemini-2.5-flash`)
+- Supabase (PostgreSQL + Auth)
+- Pillow (image validation/parsing)
 
-## Setup Instructions
+## Prerequisites
 
-### Backend Setup
+- Node.js 18+
+- npm 9+
+- Python 3.11+
+- Gemini API key
+- Supabase project (URL + anon key + service role key)
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
+## Environment Variables
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Copy `.env.example` to `.env` in project root and set values.
 
-3. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Add your Gemini API key to `.env`:
-     ```
-     GEMINI_API_KEY=your_actual_api_key_here
-     ```
+### Frontend (`VITE_*`)
+- `VITE_SUPABASE_URL`: Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Supabase public anon key
+- `VITE_API_URL`: Backend base URL (default local: `http://localhost:8000`)
 
-4. Start the backend server:
-   ```bash
-   npm start
-   ```
+### Backend
+- `GEMINI_API_KEY`: Gemini API key
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key (server-side only)
+- `ALLOWED_ORIGINS`: Comma-separated CORS origins
 
-The backend will run on `http://localhost:3001`
+## Run Locally
 
-### Frontend Setup
+### 1) Install frontend dependencies
 
-1. Install frontend dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### 2) Install backend dependencies
 
-The frontend will run on `http://localhost:5173`
+```bash
+cd backend
+python -m venv venv
+# Windows PowerShell
+.\venv\Scripts\activate
+pip install -r requirements.txt
+cd ..
+```
 
-## API Endpoints
+### 3) Start backend (FastAPI)
 
-### POST `/api/images/analyze`
-- **Description**: Analyzes an uploaded image to extract ingredients
-- **Content-Type**: `multipart/form-data`
-- **Body**: Form data with `image` field
-- **Response**: `{ ingredients: string[], success: boolean }`
+```bash
+cd backend
+.\venv\Scripts\activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-### POST `/api/recipes/generate`
-- **Description**: Generates a recipe based on ingredients and constraints
-- **Content-Type**: `application/json`
-- **Body**: 
-  ```json
-  {
-    "ingredients": ["tomato", "onion", "garlic"],
-    "calories": 500,
-    "servings": 2,
-    "dietaryPreferences": "vegetarian"
-  }
-  ```
-- **Response**: Recipe object with name, ingredients, instructions, etc.
+### 4) Start frontend (Vite)
 
-## Getting Your Gemini API Key
+```bash
+npm run dev
+```
 
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Copy the key and add it to your `.env` file
+Frontend: `http://localhost:5173`  
+Backend: `http://localhost:8000`  
+API docs: `http://localhost:8000/docs`
 
 ## Project Structure
 
 ```
-├── backend/
-│   ├── routes/
-│   │   ├── images.js      # Image analysis endpoints
-│   │   └── recipes.js     # Recipe generation endpoints
-│   ├── uploads/           # Temporary image storage
-│   ├── server.js          # Express server setup
-│   └── package.json
-├── src/
-│   ├── components/
-│   │   ├── UploadImage.jsx    # Image upload component
-│   │   ├── RecipeForm.jsx     # Recipe configuration form
-│   │   └── RecipeDisplay.jsx  # Recipe display component
-│   ├── api/
-│   │   └── client.js          # API client with Axios
-│   └── App.jsx
-├── .env                       # Environment variables
-└── README.md
+.
+├─ backend/
+│  ├─ main.py
+│  ├─ routers/
+│  │  ├─ recipes.py
+│  │  ├─ images.py
+│  │  ├─ auth.py
+│  │  ├─ favorites.py
+│  │  └─ history.py
+│  └─ requirements.txt
+├─ src/
+│  ├─ api/
+│  ├─ components/
+│  ├─ pages/
+│  ├─ i18n.ts
+│  └─ types.ts
+└─ README.md
 ```
-
-## Usage Flow
-
-1. **Upload Image**: User uploads a photo of ingredients
-2. **Image Analysis**: Backend sends image to Gemini Vision API
-3. **Ingredient Detection**: AI identifies ingredients and returns list
-4. **Recipe Configuration**: User sets calories, servings, dietary preferences
-5. **Recipe Generation**: Backend uses Gemini to create personalized recipe
-6. **Display Results**: Frontend shows formatted recipe with ingredients and instructions
-
-## Error Handling
-
-- Frontend displays user-friendly error messages
-- Backend validates inputs and provides detailed error responses
-- File upload errors are handled gracefully
-- API rate limits and failures are caught and reported
-
-## Development Notes
-
-- Images are temporarily stored during analysis and immediately deleted
-- All API calls use proper error handling and loading states
-- The UI is fully responsive and works on mobile devices
-- Environment variables are used for sensitive configuration
-
-## Security Considerations
-
-- API keys are stored in environment variables
-- File uploads are validated and limited in size
-- CORS is configured for development (adjust for production)
-- Temporary files are cleaned up after processing

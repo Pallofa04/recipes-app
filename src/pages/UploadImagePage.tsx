@@ -32,25 +32,8 @@ const UploadImagePage = () => {
           isGuest: isGuestMode
         } 
       });
-    } catch (error: unknown) {
-      console.error('Error analyzing image:', error);
-      
-      // Handle axios errors with proper type checking
-      let errorMessage = t('uploadImage.pageError');
-      
-      // Check if it's an axios error
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response?.data?.detail) {
-          errorMessage = axiosError.response.data.detail;
-        } else if (axiosError.response?.data?.error) {
-          errorMessage = axiosError.response.data.error;
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      alert(`${t('uploadImage.pageErrorPrefix')} ${errorMessage}`);
+    } catch {
+      alert(`${t('uploadImage.pageErrorPrefix')} ${t('uploadImage.pageError')}`);
     } finally {
       setIsAnalyzing(false);
     }

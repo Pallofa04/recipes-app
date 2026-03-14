@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from supabase import create_client, Client
 import os
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 supabase: Client = create_client(
     os.getenv("SUPABASE_URL"),
@@ -17,8 +19,9 @@ async def add_favorite(recipe_id: str, user_id: str):
             "recipe_id": recipe_id
         }).execute()
         return {"status": "ok"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error adding favorite: {str(e)}")
+    except Exception:
+        logger.exception("Error adding favorite")
+        raise HTTPException(status_code=500, detail="Unable to add favorite at this time")
 
 @router.delete("/{recipe_id}")
 async def remove_favorite(recipe_id: str, user_id: str):
@@ -28,8 +31,9 @@ async def remove_favorite(recipe_id: str, user_id: str):
             "recipe_id": recipe_id
         }).execute()
         return {"status": "removed"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error removing favorite: {str(e)}")
+    except Exception:
+        logger.exception("Error removing favorite")
+        raise HTTPException(status_code=500, detail="Unable to remove favorite at this time")
 
 @router.get("/{user_id}")
 async def get_favorites(user_id: str):
@@ -44,5 +48,6 @@ async def get_favorites(user_id: str):
             if item.get("recipes"):
                 recipes.append(item["recipes"])
         return recipes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching favorites: {str(e)}")
+    except Exception:
+        logger.exception("Error fetching favorites")
+        raise HTTPException(status_code=500, detail="Unable to fetch favorites at this time")

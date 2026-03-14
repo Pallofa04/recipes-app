@@ -2,7 +2,7 @@ import { useAuth } from '../api/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getUserHistory} from '../api/history';
+import { getUserHistory } from '../api/history';
 import { Recipe } from '../types';
 import { ArrowLeft } from 'lucide-react';
 import FavoriteToggle from './FavoriteToggle';
@@ -25,9 +25,8 @@ const MyRecipes = () => {
     try {
       const data = await getUserHistory(user.id);
       setRecipes(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching history:', err);
+    } catch {
+      setError(t('common.error'));
     } finally {
       setLoading(false);
     }

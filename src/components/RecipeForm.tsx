@@ -46,9 +46,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
     };
     
     try {
-      await onSubmit(requestData, isGuest); // Pasar isGuest
-    } catch (error) {
-      console.error('Error generating recipe:', error);
+      await onSubmit(requestData, isGuest);
+    } catch {
+      return;
     }
   };
 

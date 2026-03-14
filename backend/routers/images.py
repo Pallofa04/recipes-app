@@ -389,7 +389,7 @@ async def identify_dish(
 
     except Exception as e:
         logging.error(f"Error: {e}", exc_info=True)
-        raise HTTPException(500, f"Error analyzing the dish: {str(e)}")
+        raise HTTPException(500, "Unable to analyze image at this time")
 
 
 async def _add_missing_translation(recipe_id: str, dish_data_en: Dict[str, Any], target_lang: str, user_id: str):

@@ -49,17 +49,13 @@ const GenerateRecipePage = () => {
       });
       
     } catch (err: unknown) {
-      console.error('Error generating recipe:', err);
-
       let errorMessage = t('generateRecipe.genericError');
 
       if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { detail?: string; error?: string } } };
-        errorMessage = axiosError.response?.data?.detail
-          || axiosError.response?.data?.error
-          || errorMessage;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
+        const axiosError = err as { response?: { status?: number } };
+        if (axiosError.response?.status === 503) {
+          errorMessage = t('generateRecipe.genericError');
+        }
       }
       
       setError(errorMessage);
