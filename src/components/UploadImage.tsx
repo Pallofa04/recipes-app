@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Camera, Image, X, Check, AlertCircle } from 'lucide-react';
+import { Upload, Camera, Image, X, Check, AlertCircle, Lightbulb } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../api/AuthContext'; 
 
@@ -242,7 +242,10 @@ const UploadImage = ({ onImageUpload, isAnalyzing }: UploadImageProps) => {
       <div className="mt-8 animate-fade-in animate-delay-200ms">
         <div className="card">
           <div className="card-body">
-            <h3 className="text-h3 mb-4 text-gray-800">💡 {t('uploadImage.tipsTitle')}</h3>
+            <h3 className="text-h3 mb-4 text-gray-800 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-primary-600" />
+              {t('uploadImage.tipsTitle')}
+            </h3>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex gap-3">
                 <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">

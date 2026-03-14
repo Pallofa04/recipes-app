@@ -2,7 +2,7 @@ import { useAuth } from '../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertTriangle, BookOpen, Star, LogOut } from 'lucide-react';
 import { useLanguage } from '../api/LanguageContext';
 
 export default function Profile() {
@@ -85,8 +85,9 @@ export default function Profile() {
                 user.email_confirmed_at 
                   ? 'text-green-700 bg-green-50' 
                   : 'text-yellow-700 bg-yellow-50'
-              }`}>
-                {user.email_confirmed_at ? `✓ ${t('profile.verified')}` : `⚠ ${t('profile.pending')}`}
+              } inline-flex items-center gap-2`}>
+                {user.email_confirmed_at ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                {user.email_confirmed_at ? t('profile.verified') : t('profile.pending')}
               </p>
             </div>
 
@@ -126,23 +127,25 @@ export default function Profile() {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/my-recipes')}
-                className="w-full text-left px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="w-full text-left px-4 py-2 border rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
               >
-                📖 {t('profile.viewMyRecipes')}
+                <BookOpen className="w-4 h-4" />
+                {t('profile.viewMyRecipes')}
               </button>
               
               <button
                 onClick={() => navigate('/favorites')}
-                className="w-full text-left px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="w-full text-left px-4 py-2 border rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
               >
-                ⭐ {t('profile.viewFavorites')}
+                <Star className="w-4 h-4" />
+                {t('profile.viewFavorites')}
               </button>
               
               {/* Botón de Sign Out */}
               <button
                 onClick={handleSignOut}
                 disabled={isLoading}
-                className="w-full text-left px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full text-left px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
               >
                 {isLoading ? (
                   <span className="flex items-center">
@@ -150,7 +153,10 @@ export default function Profile() {
                     {t('profile.signingOut')}
                   </span>
                 ) : (
-                  `🚪 ${t('common.logout')}`
+                  <>
+                    <LogOut className="w-4 h-4" />
+                    {t('common.logout')}
+                  </>
                 )}
               </button>
             </div>

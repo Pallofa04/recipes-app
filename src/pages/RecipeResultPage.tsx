@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChefHat, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ChefHat, RotateCcw, Lightbulb } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import RecipeDisplay from '../components/RecipeDisplay';
 import FavoriteToggle from '../components/FavoriteToggle';
@@ -90,7 +90,10 @@ const RecipeResultPage = () => {
           <div className="mt-12 animate-fade-in animate-delay-300ms">
             <div className="card">
               <div className="card-body">
-                <h3 className="text-h3 mb-4 text-gray-800">💡 {t('recipeResult.tipsTitle')}</h3>
+                <h3 className="text-h3 mb-4 text-gray-800 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-primary-600" />
+                  {t('recipeResult.tipsTitle')}
+                </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex gap-3">
                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">

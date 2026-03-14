@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Camera, PenTool, ChefHat, Sparkles, Clock, Users, Star, ImageIcon, Utensils } from 'lucide-react';
+import { Camera, PenTool, ChefHat, Sparkles, Clock, Users, Star, ImageIcon, Utensils, ArrowRight } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ const Home = () => {
               <div className="flex items-center justify-center gap-2 text-primary-600 font-medium">
                 <span>{t('home.imageCardCta')}</span>
                 <div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                  <span className="text-white text-sm">→</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
               <div className="mt-4 text-xs text-gray-500">
@@ -119,7 +119,7 @@ const Home = () => {
               <div className="flex items-center justify-center gap-2 text-secondary-600 font-medium">
                 <span>{t('home.manualCardCta')}</span>
                 <div className="w-6 h-6 bg-secondary-600 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                  <span className="text-white text-sm">→</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
               <div className="mt-4 text-xs text-gray-500">

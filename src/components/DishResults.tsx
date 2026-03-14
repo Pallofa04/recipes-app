@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChefHat, Clock, MapPin, Users, Utensils, ChevronDown, ChevronUp, RotateCcw, Flame } from 'lucide-react';
+import { ChefHat, Clock, MapPin, Users, Utensils, ChevronDown, ChevronUp, RotateCcw, Flame, Salad, CakeSlice } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface IngredientInfo {
@@ -12,11 +12,14 @@ interface DishAnalysisResult {
   dish_name: string;
   type: string;
   ingredients: IngredientInfo[];
+  calories?: number;
+  servings?: number;
   origin: string;
   preparation: string[];
   cooking_time?: string;
   serving_suggestion?: string;
   success: boolean;
+  
 }
 
 interface DishResultsProps {
@@ -67,15 +70,15 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
     switch (type.toLowerCase()) {
       case 'starter':
       case 'entrante':
-        return '🥗';
+        return <Salad className="w-8 h-8 text-primary-600" />;
       case 'main course':
       case 'plato principal':
-        return '🍽️';
+        return <Utensils className="w-8 h-8 text-primary-600" />;
       case 'dessert':
       case 'postre':
-        return '🍰';
+        return <CakeSlice className="w-8 h-8 text-primary-600" />;
       default:
-        return '🍽️';
+        return <Utensils className="w-8 h-8 text-primary-600" />;
     }
   };
 
@@ -131,7 +134,7 @@ const DishResults = ({ result, imageUrl, onReset }: DishResultsProps) => {
             {/* Basic Info */}
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-4xl">{getTypeIcon(result.type)}</span>
+                <span className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-xl">{getTypeIcon(result.type)}</span>
                 <div>
                   <h1 className="text-h1 text-gray-800">{result.dish_name}</h1>
                   <div className="flex items-center gap-2 text-body-sm text-gray-600 mt-1">

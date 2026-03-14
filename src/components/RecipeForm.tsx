@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, X } from 'lucide-react';
 import { RecipeRequest } from '../types';
 import { useAuth } from '../api/AuthContext'; 
 
@@ -76,7 +77,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
       {isGuest && (
         <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
           <p className="text-yellow-800 text-xs flex items-center gap-1">
-            <span>⚠️</span>
+            <AlertTriangle className="w-4 h-4" />
             {t('recipeForm.guestMode')}
           </p>
         </div>
@@ -103,8 +104,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
                     type="button"
                     onClick={() => removeIngredient(index)}
                     className="px-2 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                    aria-label={t('recipeForm.removeIngredient')}
+                    title={t('recipeForm.removeIngredient')}
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>

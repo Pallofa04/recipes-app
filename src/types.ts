@@ -62,20 +62,3 @@ export interface Recipe {
   content_en?: RecipeContent;
   content_es?: RecipeContent;
 }
-
-export interface FavoriteResponse {
-  status: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  created_at: string;
-  email_confirmed_at?: string;
-}
-
-export interface ApiError {
-  detail: string;
-  error?: string;
-}
-

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getFavorites } from '../api/favorites';
 import { Recipe } from '../types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, XCircle, Star, Clock3, Users, Flame } from 'lucide-react';
 import FavoriteToggle from './FavoriteToggle';
 import i18n from '../i18n';
 
@@ -97,7 +97,10 @@ const Favorites = () => {
           className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
           disabled={loading}
         >
-          {loading ? '🔄' : '↻'} {t('common.refresh')}
+          <span className="inline-flex items-center gap-1">
+            <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            {t('common.refresh')}
+          </span>
         </button>
       </div>
 
@@ -107,7 +110,10 @@ const Favorites = () => {
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded p-3">
-          <p className="text-red-600 text-sm">❌ {error}</p>
+          <p className="text-red-600 text-sm inline-flex items-center gap-1">
+            <XCircle className="w-4 h-4" />
+            {error}
+          </p>
           <button
             onClick={fetchFavorites}
             className="mt-2 px-2 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded"
@@ -117,7 +123,9 @@ const Favorites = () => {
         </div>
       ) : favorites.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-5xl mb-3">⭐</div>
+          <div className="mb-3 inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-50">
+            <Star className="w-7 h-7 text-amber-500" />
+          </div>
           <h3 className="text-base font-medium text-gray-700 mb-2">
             {t('favoritesPage.emptyTitle')}
           </h3>
@@ -152,9 +160,9 @@ const Favorites = () => {
                       {content.description}
                     </p>
                     <div className="flex gap-3 text-xs text-gray-500 mb-2">
-                      <span>⏱️ {content.prep_time}</span>
-                      <span>👥 {recipe.servings}</span>
-                      {recipe.calories && <span>🔥 {recipe.calories}</span>}
+                      <span className="inline-flex items-center gap-1"><Clock3 className="w-3.5 h-3.5" /> {content.prep_time}</span>
+                      <span className="inline-flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {recipe.servings}</span>
+                      {recipe.calories && <span className="inline-flex items-center gap-1"><Flame className="w-3.5 h-3.5" /> {recipe.calories}</span>}
                     </div>
                   </div>
                   <div className="flex gap-2 mt-auto pt-2">
